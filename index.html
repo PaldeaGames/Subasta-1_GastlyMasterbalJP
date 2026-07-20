@@ -891,37 +891,53 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   transform:rotate(-8deg); animation:vendido-stamp .7s cubic-bezier(.2,1.3,.4,1) 1;
   text-shadow:0 0 24px rgba(255,59,92,.5);
 }
-#tv-vendido .vendido-ganador{ font-family:'Bebas Neue',sans-serif; font-size:clamp(24px,6vw,46px); color:var(--gold); letter-spacing:2px; margin-top:18px; }
+@keyframes ganador-brilla{
+  0%,100%{ text-shadow:0 0 10px rgba(245,200,66,.5); transform:scale(1); }
+  50%{ text-shadow:0 0 24px rgba(245,200,66,.9), 0 0 40px rgba(245,200,66,.4); transform:scale(1.04); }
+}
+@keyframes ganador-entra{
+  0%{ transform:translateY(20px) scale(.8); opacity:0; }
+  60%{ transform:translateY(-4px) scale(1.08); opacity:1; }
+  100%{ transform:translateY(0) scale(1); opacity:1; }
+}
+#tv-vendido .vendido-ganador{
+  font-family:'Bebas Neue',sans-serif; font-size:clamp(24px,6vw,46px); color:var(--gold); letter-spacing:2px; margin-top:18px;
+  animation:ganador-entra .6s cubic-bezier(.2,1.3,.4,1) 1, ganador-brilla 1.8s ease-in-out .6s infinite;
+}
 #tv-vendido .vendido-monto{ font-family:'JetBrains Mono',monospace; font-size:clamp(28px,8vw,60px); font-weight:800; color:#fff; }
 #tv-vendido .vendido-carta{ font-size:clamp(13px,3.5vw,20px); color:var(--muted2); margin-top:4px; }
 
-/* Fuego saliendo DEL LETRERO mismo: contenedor del stamp con llamas encima */
+/* Festejo del VENDIDO: confeti cayendo + destellos (sin fuego) */
 .vendido-stamp-wrap{ position:relative; display:inline-block; }
-@keyframes llama-lengua{
-  0%,100%{ transform:translateY(0) scaleY(1) scaleX(1); opacity:.85; }
-  20%{ transform:translateY(-16px) scaleY(1.4) scaleX(.8); opacity:1; }
-  45%{ transform:translateY(-8px) scaleY(.75) scaleX(1.2); opacity:.7; }
-  70%{ transform:translateY(-20px) scaleY(1.3) scaleX(.85); opacity:1; }
+@keyframes destello-pulso{
+  0%,100%{ transform:scale(.8) rotate(0deg); opacity:.4; }
+  50%{ transform:scale(1.3) rotate(20deg); opacity:1; }
 }
-.vendido-stamp-wrap .llama{
-  position:absolute; bottom:72%; width:26%; height:70%;
-  background:radial-gradient(ellipse at 50% 100%,
-    #fff28a 0%, #ffd23a 18%, #ff8a1a 45%, #ff3c00 70%, transparent 85%);
-  filter:blur(3px); border-radius:50% 50% 44% 44%;
-  pointer-events:none; z-index:0; mix-blend-mode:screen;
-  transform-origin:50% 100%;
+.vendido-stamp-wrap .destello{
+  position:absolute; font-size:26px; pointer-events:none; z-index:2;
+  animation:destello-pulso 1.3s ease-in-out infinite;
 }
-.vendido-stamp-wrap .llama.l1{ left:6%;  animation:llama-lengua 1.1s ease-in-out infinite; }
-.vendido-stamp-wrap .llama.l2{ left:28%; height:90%; animation:llama-lengua .85s ease-in-out infinite .2s; }
-.vendido-stamp-wrap .llama.l3{ left:50%; height:78%; animation:llama-lengua 1.25s ease-in-out infinite .1s; }
-.vendido-stamp-wrap .llama.l4{ left:70%; animation:llama-lengua .95s ease-in-out infinite .35s; }
-.vendido-stamp-wrap .llama.l5{ left:6%; width:88%; height:40%; bottom:80%; filter:blur(10px); opacity:.5; background:radial-gradient(ellipse at 50% 100%, rgba(255,120,10,.7), transparent 70%); animation:llama-lengua 1.4s ease-in-out infinite; }
+.vendido-stamp-wrap .destello.d1{ top:-18px; left:-4%; animation-delay:0s; }
+.vendido-stamp-wrap .destello.d2{ top:-24px; right:2%; animation-delay:.4s; }
+.vendido-stamp-wrap .destello.d3{ bottom:-16px; left:20%; animation-delay:.7s; }
+.vendido-stamp-wrap .destello.d4{ bottom:-20px; right:16%; animation-delay:.2s; }
 #tv-vendido .vendido-stamp{ position:relative; z-index:1; }
 #tv-vendido.sin-ganador .vendido-stamp{
   color:var(--muted2); border-color:var(--muted); text-shadow:none;
 }
-#tv-vendido.sin-ganador .vendido-stamp-wrap .llama{ display:none; }
+#tv-vendido.sin-ganador .vendido-stamp-wrap .destello{ display:none; }
+#tv-vendido.sin-ganador .confeti-cae{ display:none !important; }
 #tv-vendido.sin-ganador .vendido-ganador{ color:var(--muted); }
+
+/* Confeti cayendo por toda la pantalla del vendido */
+@keyframes confeti-caer{
+  0%{ transform:translateY(-20px) rotate(0deg); opacity:1; }
+  100%{ transform:translateY(105vh) rotate(720deg); opacity:.4; }
+}
+#tv-vendido .confeti-cae{
+  position:absolute; top:0; width:11px; height:16px; z-index:0;
+  animation:confeti-caer linear infinite;
+}
 
 /* ════════ TV REDISEÑO DINÁMICO ════════ */
 /* Barra superior con oferta y tiempo GRANDES y protagónicos */
@@ -959,6 +975,36 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 }
 .tv-card-img{ animation:carta-flota 4.5s ease-in-out infinite; will-change:transform; }
 #tv-stage{ position:relative; }
+
+/* Chispas eléctricas en los bordes de la carta (solo TV) */
+@keyframes chispa-recorre{
+  0%{ background-position:0% 50%, 50% 0%, 100% 50%, 50% 100%; opacity:.6; }
+  50%{ opacity:1; }
+  100%{ background-position:100% 50%, 50% 100%, 0% 50%, 50% 0%; opacity:.6; }
+}
+@keyframes chispa-parpadeo{
+  0%,100%{ opacity:.9; filter:drop-shadow(0 0 4px #6cf) drop-shadow(0 0 8px #4af); }
+  50%{ opacity:.4; filter:drop-shadow(0 0 8px #ade) drop-shadow(0 0 16px #6cf); }
+}
+.tv-elec{
+  position:absolute; inset:-6px; z-index:4; pointer-events:none; border-radius:16px;
+  /* cuatro gradientes lineales que corren por cada borde, como chispas */
+  background:
+    linear-gradient(90deg, transparent, #7cc4ff, transparent) 0% 50%/60% 3px no-repeat,
+    linear-gradient(0deg, transparent, #aee0ff, transparent) 50% 0%/3px 60% no-repeat,
+    linear-gradient(90deg, transparent, #7cc4ff, transparent) 100% 50%/60% 3px no-repeat,
+    linear-gradient(0deg, transparent, #aee0ff, transparent) 50% 100%/3px 60% no-repeat;
+  animation:chispa-recorre 2.4s linear infinite, chispa-parpadeo 1.1s ease-in-out infinite;
+  mix-blend-mode:screen;
+}
+/* pequeños destellos en las esquinas */
+.tv-elec::before, .tv-elec::after{
+  content:"⚡"; position:absolute; font-size:22px; color:#cfefff;
+  filter:drop-shadow(0 0 6px #6cf);
+  animation:chispa-parpadeo .7s ease-in-out infinite;
+}
+.tv-elec::before{ top:-14px; left:12%; }
+.tv-elec::after{ bottom:-14px; right:12%; animation-delay:.35s; }
 
 /* Transición del último minuto: carta atrás, pujas protagonistas.
    Se activa/desactiva por clase, así que si el anti-snipe sube el reloj
@@ -1503,7 +1549,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v14</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v15</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -1735,6 +1781,7 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
     <div class="tv-left" id="tv-left">
       <div class="tv-card-stage" id="tv-stage">
         <div id="tv-ganando"></div>
+        <div class="tv-elec" id="tv-elec" style="display:none"></div>
         <img class="tv-card-img" id="tv-img" src="" alt="" style="display:none">
         <div style="color:var(--muted2);font-size:14px" id="tv-no-img">Sin imagen</div>
       </div>
@@ -1757,11 +1804,10 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   <!-- Pantalla VENDIDO al finalizar -->
   <div id="tv-vendido">
     <div class="vendido-stamp-wrap">
-      <span class="llama l5"></span>
-      <span class="llama l1"></span>
-      <span class="llama l2"></span>
-      <span class="llama l3"></span>
-      <span class="llama l4"></span>
+      <span class="destello d1">✨</span>
+      <span class="destello d2">🎉</span>
+      <span class="destello d3">⭐</span>
+      <span class="destello d4">✨</span>
       <div class="vendido-stamp">¡VENDIDO!</div>
     </div>
     <div class="vendido-ganador" id="tv-vendido-ganador">—</div>
@@ -1881,7 +1927,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v14 — 20 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v15 — 20 jul 2026","color:#f5c842;font-weight:bold");
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -1906,6 +1952,8 @@ let timerInterval = null;
 let tvFuegoEncendido = false;
 let tensionUltimoSeg = -1;
 let victoriaSonada = false;
+let appUltimaPujaId = null;
+let victoriaAppSonada = false;
 let loginLiveInt = null;
 let scheduleTimeout = null;
 let isTVMode = false;
@@ -2360,6 +2408,23 @@ function renderApp(){
 
   const sub = S.subasta;
   const c   = S.carta;
+
+  // Sonidos también para el pujador (no solo la TV). El navegador exige un toque
+  // previo para permitir audio; como el pujador toca para pujar, se activa solo.
+  if(!isTVMode){
+    const liderApp = S.pujas[0] || null;
+    if(appUltimaPujaId !== null && liderApp && liderApp.id &&
+       liderApp.id !== appUltimaPujaId && sub.estado === "activa"){
+      sonidoPuja();
+    }
+    appUltimaPujaId = liderApp && liderApp.id ? liderApp.id : (liderApp ? "sin-id" : null);
+    if(sub.estado === "finalizada" && S.lider && user &&
+       (S.lider.uid ? S.lider.uid === user.uid : S.lider.ig === user.ig) &&
+       !victoriaAppSonada){
+      victoriaAppSonada = true; sonidoVictoria();
+    }
+    if(sub.estado !== "finalizada") victoriaAppSonada = false;
+  }
 
   // Status pill
   const pill  = document.getElementById("status-pill");
@@ -3400,10 +3465,9 @@ function startTimer(){
         renderLogTV(null);
       }
     }
-    // Música de tensión en los últimos 10 segundos reales (solo TV).
-    // Un latido por segundo. Se controla con tensionUltimoSeg para no repetir
-    // dentro del mismo segundo (el tick corre cada 500ms).
-    if(isTVMode){
+    // Música de tensión en los últimos 10 segundos reales, en TV y en el
+    // celular del pujador. Un latido por segundo (tick corre cada 500ms).
+    {
       const seg = Math.ceil(resto/1000);
       if(resto > 0 && resto <= 10000){
         if(seg !== tensionUltimoSeg){
@@ -3951,6 +4015,29 @@ let tvAudioCtx     = null;
 
 // Sonido de caja registradora antigua "cha-CHING": un golpe seco (el cajón)
 // seguido de dos campanas metálicas afinadas que resuenan, como la caja real.
+// Genera confeti cayendo en la pantalla VENDIDO. Una sola vez por aparición.
+let confetiLanzado = false;
+function lanzarConfeti(){
+  const cont = document.getElementById("tv-vendido");
+  if(!cont || confetiLanzado) return;
+  confetiLanzado = true;
+  const colores = ["#f5c842","#ff3b5c","#00e67a","#4af","#ff8a1a","#c77dff","#fff"];
+  let html = "";
+  for(let i=0;i<60;i++){
+    const izq = Math.random()*100;
+    const dur = 2.5 + Math.random()*3;
+    const del = Math.random()*2.5;
+    const col = colores[Math.floor(Math.random()*colores.length)];
+    const rot = Math.random()*360;
+    const forma = Math.random()>0.5 ? "border-radius:50%;" : "";
+    html += `<span class="confeti-cae" style="left:${izq}%;background:${col};${forma}animation-duration:${dur}s;animation-delay:${del}s;transform:rotate(${rot}deg)"></span>`;
+  }
+  // Insertar el confeti al inicio, sin borrar el contenido del vendido
+  const previos = cont.querySelectorAll(".confeti-cae");
+  previos.forEach(p=>p.remove());
+  cont.insertAdjacentHTML("afterbegin", html);
+}
+
 function sonidoPuja(){
   try{
     if(!tvAudioCtx) tvAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -4127,6 +4214,7 @@ function renderTV(){
         if(stamp) stamp.textContent = "¡VENDIDO!";
         vendido.classList.remove("sin-ganador");
         vendido.classList.add("on");
+        lanzarConfeti();
         // Fanfarria de victoria una sola vez
         if(isTVMode && !victoriaSonada){ victoriaSonada = true; sonidoVictoria(); }
       } else {
@@ -4142,6 +4230,7 @@ function renderTV(){
     }
   } else {
     victoriaSonada = false;   // reset para la próxima subasta
+    confetiLanzado = false;
     tvPill.className="pill pill-wait";
     tvTxt.textContent="En espera";
     if(vendido) vendido.classList.remove("on");
@@ -4150,13 +4239,17 @@ function renderTV(){
   // Img
   const tvImg   = document.getElementById("tv-img");
   const tvNoImg = document.getElementById("tv-no-img");
+  const tvElec  = document.getElementById("tv-elec");
   if(c.imgs && c.imgs.length>0){
     tvImg.src = c.imgs[galIdx]||c.imgs[0];
     tvImg.style.display="block";
     tvNoImg.style.display="none";
+    // Chispas eléctricas solo cuando hay carta y la subasta está en vivo
+    if(tvElec) tvElec.style.display = (sub.estado==="activa") ? "block" : "none";
   } else {
     tvImg.style.display="none";
     tvNoImg.style.display="block";
+    if(tvElec) tvElec.style.display="none";
   }
 
   document.getElementById("tv-card-title").textContent = c.titulo;
