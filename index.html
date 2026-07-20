@@ -807,36 +807,29 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
   border:1px solid rgba(255,110,20,.5) !important;
   background:linear-gradient(100deg, rgba(255,80,20,.14), rgba(255,150,30,.03)) !important;
   animation:fuego-glow 1.4s ease-in-out infinite;
-  overflow:hidden;
+  display:flex; align-items:center; gap:6px;
 }
-/* Fuego CSS real: capa de llamas subiendo desde el borde inferior de la fila.
-   Se ve limpio y no se descuadra como los emojis. */
-@keyframes fuego-sube{
-  0%,100%{ transform:scaleY(1) scaleX(1); opacity:.85; }
-  30%{ transform:scaleY(1.35) scaleX(.92); opacity:1; }
-  55%{ transform:scaleY(.8) scaleX(1.08); opacity:.7; }
-  80%{ transform:scaleY(1.2) scaleX(.96); opacity:1; }
+/* Llamitas a los lados del nombre (como el dibujo): animadas, sin descuadrar */
+@keyframes llama-baila{
+  0%,100%{ transform:scale(1) rotate(-4deg); }
+  25%{ transform:scale(1.18,.9) rotate(3deg); }
+  50%{ transform:scale(.92,1.15) rotate(-3deg); }
+  75%{ transform:scale(1.1,.95) rotate(4deg); }
 }
-.log-item.en-llamas .fuego{
-  position:absolute; left:0; right:0; bottom:0;
-  pointer-events:none; z-index:0;
-  transform-origin:50% 100%;
-  background:linear-gradient(0deg,
-    rgba(255,50,0,.7) 0%, rgba(255,110,10,.5) 30%,
-    rgba(255,180,30,.25) 60%, transparent 100%);
-  filter:blur(5px);
-  mix-blend-mode:screen;
-  animation:fuego-sube .55s ease-in-out infinite;
+.fuego-lado{
+  flex-shrink:0; line-height:1; pointer-events:none;
+  filter:drop-shadow(0 0 5px rgba(255,120,20,.9));
+  animation:llama-baila .5s ease-in-out infinite;
 }
-.log-item.en-llamas > *:not(.fuego){ position:relative; z-index:1; }
-/* 1er lugar: fuego alto e intenso */
-.log-item.en-llamas.rank1 .fuego{ height:85%; }
+.fuego-lado.der{ animation-delay:.22s; }
+/* 1er lugar: llamas grandes */
+.log-item.en-llamas.rank1 .fuego-lado{ font-size:26px; }
 .log-item.en-llamas.rank1{
   border-color:rgba(255,80,20,.85) !important;
-  background:linear-gradient(100deg, rgba(255,70,10,.24), rgba(255,150,30,.06)) !important;
+  background:linear-gradient(100deg, rgba(255,70,10,.22), rgba(255,150,30,.06)) !important;
 }
-/* 2do lugar: fuego más bajo y suave */
-.log-item.en-llamas.rank2 .fuego{ height:45%; opacity:.7; animation-duration:.7s; }
+/* 2do lugar: llamas más pequeñas */
+.log-item.en-llamas.rank2 .fuego-lado{ font-size:17px; }
 @keyframes puja-flash{
   0%{ background:rgba(245,200,66,.45); transform:scale(1.02); }
   100%{ background:transparent; transform:scale(1); }
@@ -1044,7 +1037,11 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 /* Etiqueta EXPRESS junto al logo / título */
 .express-badge{
   display:inline-flex; align-items:center; gap:4px;
-  background:linear-gradient(90deg,#ff6a1a,#ff3b5c); color:#fff;
+  background:linear-gradient(90deg,#ff6a1a,#ff3b5c);
+  color:#fff !important;
+  -webkit-text-fill-color:#fff !important;   /* el logo usa texto transparente; el badge NO debe heredarlo */
+  -webkit-background-clip:border-box !important; background-clip:border-box !important;
+  font-family:'Outfit',sans-serif;
   font-size:11px; font-weight:800; letter-spacing:1px;
   padding:3px 9px; border-radius:20px; margin-left:8px; vertical-align:middle;
   animation:blink 1.5s ease-in-out infinite;
@@ -1052,6 +1049,23 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 
 /* Tema Express: acentos rojo/naranja en toda la interfaz cuando está activa */
 body.express-tema{ --gold:#ff8a3a; }
+/* Botones de puja rápida en modo Express: borde y rayo naranja */
+.qbtn-express{
+  border-color:rgba(255,106,26,.5) !important;
+  background:linear-gradient(135deg,rgba(255,106,26,.12),rgba(255,59,92,.04)) !important;
+}
+/* Cinta fija "SUBASTA EXPRESS" durante toda la experiencia del pujador */
+#express-cinta{
+  display:none; text-align:center;
+  background:linear-gradient(90deg,#ff6a1a,#ff3b5c,#ff6a1a);
+  background-size:200% 100%;
+  color:#fff; font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(15px,3.5vw,20px); letter-spacing:3px;
+  padding:7px; margin-bottom:12px; border-radius:10px;
+  animation:cinta-brilla 3s linear infinite;
+}
+@keyframes cinta-brilla{ 0%{background-position:0% 50%;} 100%{background-position:200% 50%;} }
+body.express-tema #express-cinta{ display:block; }
 body.express-tema .tv-topbar .tv-pval{ color:#ff8a3a; }
 body.express-tema #login-live-panel{
   border-color:#ff6a1a !important;
@@ -1479,6 +1493,9 @@ body.express-tema #login-live-panel{
 
   <div class="wrap">
 
+    <!-- CINTA SUBASTA EXPRESS (solo modo express) -->
+    <div id="express-cinta">⚡ SUBASTA EXPRESS · ¡RÁPIDA! ⚡</div>
+
     <!-- AVISO REINGRESO -->
     <div class="aviso-reingreso" style="background:rgba(245,200,66,.06);border:1px solid rgba(245,200,66,.2);border-radius:10px;padding:9px 14px;margin-bottom:12px;font-size:11px;color:var(--muted2);line-height:1.6;text-align:center">
       🔒 Tu identidad está verificada con Google. Puedes cerrar y volver cuando quieras: tus pujas siguen asociadas a tu cuenta.
@@ -1621,7 +1638,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v19</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v21</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -2025,7 +2042,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v19 — 20 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v21 — 20 jul 2026","color:#f5c842;font-weight:bold");
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -3203,9 +3220,10 @@ function renderQuickBids(){
       { monto: base+inc*2, extra: inc*2 },
     ];
   }
+  const rayo = S.subasta.express ? "⚡ " : "";
   document.getElementById("quick-grid").innerHTML = opts.map(o=>`
-    <button class="qbtn" onclick="doBid(${o.monto})" ${activa?"":'disabled'}>
-      ${fmtCLP(o.monto)}<span>${o.extra>0 ? "+"+fmtCLP(o.extra) : "Abrir"}</span>
+    <button class="qbtn ${S.subasta.express?'qbtn-express':''}" onclick="doBid(${o.monto})" ${activa?"":'disabled'}>
+      ${rayo}${fmtCLP(o.monto)}<span>${o.extra>0 ? "+"+fmtCLP(o.extra) : "Abrir"}</span>
     </button>
   `).join("");
 }
@@ -4183,6 +4201,24 @@ let tvPrimerRender = true;
 let tvUltimoTotal  = 0;
 let tvUltimoLider  = null;
 let tvAudioCtx     = null;
+// Desbloqueo del audio: los navegadores (sobre todo móvil) exigen que el
+// AudioContext se cree/reanude DENTRO de un gesto del usuario. Enganchamos el
+// primer toque/clic para crearlo ahí, así el sonido de la primera puja ya suena.
+function desbloquearAudio(){
+  try{
+    if(!tvAudioCtx) tvAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(tvAudioCtx.state === "suspended") tvAudioCtx.resume();
+    // Un tono mudo para "despertar" el contexto en iOS
+    const o = tvAudioCtx.createOscillator();
+    const g = tvAudioCtx.createGain();
+    g.gain.value = 0;
+    o.connect(g); g.connect(tvAudioCtx.destination);
+    o.start(); o.stop(tvAudioCtx.currentTime + 0.01);
+  }catch(e){}
+}
+window.addEventListener("pointerdown", desbloquearAudio, { once:true });
+window.addEventListener("touchstart", desbloquearAudio, { once:true });
+window.addEventListener("click", desbloquearAudio, { once:true });
 
 // Sonido de caja registradora antigua "cha-CHING": un golpe seco (el cajón)
 // seguido de dos campanas metálicas afinadas que resuenan, como la caja real.
@@ -4491,12 +4527,13 @@ function renderLogTV(flashId){
     ].filter(Boolean).join(" ");
     return `
     <div class="${clases}">
-      ${fuego ? '<span class="fuego"></span>' : ''}
+      ${fuego ? '<span class="fuego-lado izq">🔥</span>' : ''}
       <div class="log-rank">${i===0?"★":"#"+(i+1)}</div>
       <div class="log-body">
         <div class="log-name">${anonimizar(p)}</div>
         <div class="log-ig"><span style="color:var(--green)">✓ Verificado</span></div>
       </div>
+      ${fuego ? '<span class="fuego-lado der">🔥</span>' : ''}
       <div class="log-r">
         <div class="log-amt">${fmtCLP(p.monto)}</div>
         <div class="log-ts">${p.antisnipe?"⚡ ":""}${p.hora}</div>
