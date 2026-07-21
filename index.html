@@ -1638,7 +1638,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v21</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v22</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -1647,7 +1647,7 @@ body.express-tema #login-live-panel{
         <input class="a-input" id="a-title" placeholder="Nombre carta" />
         <select class="a-input" id="a-cond" style="cursor:pointer;color:var(--text)">
           <option value="M"   style="background:var(--s2)">M · Mint (impecable)</option>
-          <option value="NM"  style="background:var(--s2)">NM · Near Mint (perfecto)</option>
+          <option value="NM"  style="background:var(--s2)">NM · Near Mint (casi perfecto)</option>
           <option value="LP"  style="background:var(--s2)">LP · Lightly Played (uso leve)</option>
           <option value="MP"  style="background:var(--s2)">MP · Moderately Played</option>
           <option value="HP"  style="background:var(--s2)">HP · Heavily Played</option>
@@ -1676,18 +1676,61 @@ body.express-tema #login-live-panel{
         <input class="a-input" id="a-set-es" placeholder="Set en español (ej: Fuentes Milagrosas)" />
         <select class="a-input" id="a-rareza" style="cursor:pointer;color:var(--text)">
           <option value="" style="background:var(--s2)">— Rareza —</option>
-          <option style="background:var(--s2)">Common (C)</option>
-          <option style="background:var(--s2)">Uncommon (U)</option>
-          <option style="background:var(--s2)">Rare (R)</option>
-          <option style="background:var(--s2)">Holo Rare</option>
-          <option style="background:var(--s2)">Double Rare (RR)</option>
-          <option style="background:var(--s2)">Ultra Rare (SAR)</option>
-          <option style="background:var(--s2)">Special Art Rare (SAR)</option>
-          <option style="background:var(--s2)">Hyper Rare (HR)</option>
-          <option style="background:var(--s2)">Secret Rare (SR)</option>
-          <option style="background:var(--s2)">Illustration Rare (IR)</option>
-          <option style="background:var(--s2)">Special Illustration Rare (SIR)</option>
+          <optgroup label="Básicas" style="background:var(--s2)">
+            <option style="background:var(--s2)">Common (C)</option>
+            <option style="background:var(--s2)">Uncommon (U)</option>
+            <option style="background:var(--s2)">Rare (R)</option>
+            <option style="background:var(--s2)">Double Rare (RR)</option>
+          </optgroup>
+          <optgroup label="Holo / Reverse" style="background:var(--s2)">
+            <option style="background:var(--s2)">Holo Rare</option>
+            <option style="background:var(--s2)">Reverse Holo</option>
+            <option style="background:var(--s2)">Cosmos Holo</option>
+            <option style="background:var(--s2)">Confetti Holo</option>
+          </optgroup>
+          <optgroup label="Ultra / Especiales" style="background:var(--s2)">
+            <option style="background:var(--s2)">Ultra Rare (UR)</option>
+            <option style="background:var(--s2)">Illustration Rare (IR)</option>
+            <option style="background:var(--s2)">Special Illustration Rare (SIR)</option>
+            <option style="background:var(--s2)">Special Art Rare (SAR)</option>
+            <option style="background:var(--s2)">Art Rare (AR)</option>
+            <option style="background:var(--s2)">Character Rare (CHR)</option>
+            <option style="background:var(--s2)">Character Super Rare (CSR)</option>
+            <option style="background:var(--s2)">Trainer Gallery (TG)</option>
+          </optgroup>
+          <optgroup label="Rare máximas" style="background:var(--s2)">
+            <option style="background:var(--s2)">Super Rare (SR)</option>
+            <option style="background:var(--s2)">Secret Rare (SR)</option>
+            <option style="background:var(--s2)">Hyper Rare (HR)</option>
+            <option style="background:var(--s2)">Rainbow Rare</option>
+            <option style="background:var(--s2)">Gold Rare / Gold Secret</option>
+            <option style="background:var(--s2)">Shiny Rare (S)</option>
+            <option style="background:var(--s2)">Shiny Super Rare (SSR)</option>
+            <option style="background:var(--s2)">Amazing Rare (A)</option>
+            <option style="background:var(--s2)">Radiant Rare (K)</option>
+            <option style="background:var(--s2)">ACE SPEC Rare</option>
+          </optgroup>
+          <optgroup label="Mecánicas / Eras" style="background:var(--s2)">
+            <option style="background:var(--s2)">GX</option>
+            <option style="background:var(--s2)">EX (moderna)</option>
+            <option style="background:var(--s2)">ex (clásica)</option>
+            <option style="background:var(--s2)">V</option>
+            <option style="background:var(--s2)">VMAX</option>
+            <option style="background:var(--s2)">VSTAR</option>
+            <option style="background:var(--s2)">Tera</option>
+            <option style="background:var(--s2)">Prime</option>
+            <option style="background:var(--s2)">LEGEND</option>
+            <option style="background:var(--s2)">BREAK</option>
+            <option style="background:var(--s2)">Prism Star</option>
+            <option style="background:var(--s2)">Tag Team</option>
+            <option style="background:var(--s2)">Level X</option>
+            <option style="background:var(--s2)">Star (Shining/Gold Star)</option>
+            <option style="background:var(--s2)">1st Edition</option>
+            <option style="background:var(--s2)">Shadowless</option>
+          </optgroup>
           <option style="background:var(--s2)">Promo</option>
+          <option style="background:var(--s2)">Jumbo / Oversized</option>
+          <option style="background:var(--s2)">Otra</option>
         </select>
       </div>
 
@@ -1744,8 +1787,12 @@ body.express-tema #login-live-panel{
       <!-- Botones de tiempo rápido (solo visibles con Express ON) -->
       <div id="express-tiempos" style="display:none;gap:6px;margin-bottom:10px;flex-wrap:wrap">
         <button class="chip-btn" onclick="setExpressDur(10)">10 min</button>
+        <button class="chip-btn" onclick="setExpressDur(15)">15 min</button>
+        <button class="chip-btn" onclick="setExpressDur(20)">20 min</button>
         <button class="chip-btn" onclick="setExpressDur(30)">30 min</button>
+        <button class="chip-btn" onclick="setExpressDur(45)">45 min</button>
         <button class="chip-btn" onclick="setExpressDur(60)">1 hora</button>
+        <button class="chip-btn" onclick="setExpressDur(90)">1h 30</button>
         <button class="chip-btn" onclick="setExpressDur(120)">2 horas</button>
       </div>
 
@@ -1786,6 +1833,13 @@ body.express-tema #login-live-panel{
             <option value="">--:--</option>
           </select>
           <button class="chip-btn" onclick="limpiarFin()" style="color:var(--muted)" title="Quitar">✕</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px">
+          <span style="font-size:10px;color:var(--muted2);letter-spacing:.5px">⏱ Rápido desde ahora:</span>
+          <button class="chip-btn" onclick="setFinDesdeAhora(2)">+2 min</button>
+          <button class="chip-btn" onclick="setFinDesdeAhora(5)">+5 min</button>
+          <button class="chip-btn" onclick="setFinDesdeAhora(15)">+15 min</button>
+          <button class="chip-btn" onclick="setFinDesdeAhora(60)">+1 hora</button>
         </div>
         <div id="dur-auto-hint" style="display:none;font-size:11px;margin-top:6px;color:var(--gold)"></div>
       </div>
@@ -2042,7 +2096,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v21 — 20 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v22 — 20 jul 2026","color:#f5c842;font-weight:bold");
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -3739,6 +3793,17 @@ function recalcDuracion(){
   hint.textContent = `⏱ Duración automática: ${h} h ${m} min — termina ${fechaLegible(finTs)}`;
 }
 
+// Término a X minutos desde AHORA (para pruebas rápidas del cierre).
+function setFinDesdeAhora(min){
+  const d = new Date(Date.now() + min*60000);
+  const campo = document.getElementById("a-fin");
+  if(campo){ campo.value = aDatetimeLocal(d); }
+  const sel = document.getElementById("a-fin-hora");
+  if(sel) sel.value = "";
+  recalcDuracion();
+  toast(`🏁 Término en +${min} min (desde ahora)`, "ok");
+}
+
 function setFinDia(offset){
   const sel   = document.getElementById("a-fin-hora");
   const campo = document.getElementById("a-fin");
@@ -4642,7 +4707,7 @@ function anonimizar(p){
 }
 
 const ESTADOS = {
-  "NM":  "Near Mint · Estado perfecto",
+  "NM":  "Near Mint · Casi perfecto",
   "M":   "Mint · Impecable",
   "LP":  "Lightly Played · Uso leve",
   "MP":  "Moderately Played · Uso moderado",
@@ -5356,6 +5421,7 @@ window.cerrarGracias   = cerrarGracias;
 window.recalcDuracion  = recalcDuracion;
 window.toggleExpressUI = toggleExpressUI;
 window.setExpressDur   = setExpressDur;
+window.setFinDesdeAhora = setFinDesdeAhora;
 window.setFinDia       = setFinDia;
 window.aplicarHoraFin  = aplicarHoraFin;
 window.limpiarFin      = limpiarFin;
