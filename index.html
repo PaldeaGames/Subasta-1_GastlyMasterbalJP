@@ -1346,11 +1346,11 @@ body.express-tema #login-live-panel{
       <div id="login-live-panel" style="display:none;background:linear-gradient(135deg,rgba(0,230,122,.12),rgba(0,230,122,.02));border:2px solid var(--green);border-radius:16px;padding:18px;margin-bottom:16px;text-align:center;box-shadow:0 0 30px rgba(0,230,122,.12)">
         <div style="display:inline-flex;align-items:center;gap:7px;background:rgba(0,230,122,.18);border-radius:20px;padding:4px 13px;margin-bottom:14px">
           <div class="dot-pulse" style="background:var(--green)"></div>
-          <span style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--green)">SUBASTA EN VIVO</span>
+          <span class="login-live-head" style="font-size:11px;font-weight:800;letter-spacing:1.5px;color:var(--green)">SUBASTA EN VIVO</span>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:center">
           <div>
-            <div style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Oferta actual</div>
+            <div class="login-live-plbl" style="font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:4px">Oferta actual</div>
             <div id="login-live-precio" style="font-family:'JetBrains Mono',monospace;font-size:clamp(24px,6vw,34px);font-weight:800;color:var(--gold);line-height:1">—</div>
             <div id="login-live-pujas" style="font-size:10px;color:var(--muted2);margin-top:3px">0 pujas</div>
           </div>
@@ -1638,7 +1638,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v22</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v23</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -2096,7 +2096,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v22 — 20 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v23 — 20 jul 2026","color:#f5c842;font-weight:bold");
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -5247,8 +5247,10 @@ function renderLoginLivePanel(){
   const panel = document.getElementById("login-live-panel");
   if(!panel) return;
   const activa = S.subasta.estado === "activa" && S.subasta.finTs;
+  const inicioProg = (typeof inicioSubasta === "function") ? inicioSubasta() : (S.subasta.inicioProgTs || S.subasta.inicioTs);
+  const programada = S.subasta.estado === "programada" && inicioProg;
 
-  if(!activa){
+  if(!activa && !programada){
     panel.style.display = "none";
     if(loginLiveInt){ clearInterval(loginLiveInt); loginLiveInt = null; }
     return;
@@ -5258,6 +5260,49 @@ function renderLoginLivePanel(){
   const precioEl = document.getElementById("login-live-precio");
   const pujasEl  = document.getElementById("login-live-pujas");
   if(precioEl) precioEl.textContent = fmtCLP(S.subasta.precioAct > 0 ? S.subasta.precioAct : S.subasta.base);
+
+  // ── MODO PROGRAMADA: cuenta regresiva hacia el INICIO ──
+  if(programada && !activa){
+    // Encabezado del panel: "PRÓXIMAMENTE" en vez de "EN VIVO"
+    panel.style.borderColor = "var(--gold)";
+    panel.style.background = "linear-gradient(135deg,rgba(245,200,66,.12),rgba(245,200,66,.02))";
+    if(pujasEl) pujasEl.textContent = "Precio de salida";
+    const plblEl = panel.querySelector(".login-live-plbl");
+    if(plblEl) plblEl.textContent = "Precio de salida";
+    const lblEncabezado = panel.querySelector(".login-live-head");
+    if(lblEncabezado){ lblEncabezado.textContent = "PRÓXIMAMENTE"; }
+
+    const pintaProg = () => {
+      const timerEl = document.getElementById("login-live-timer");
+      const tlblEl  = document.getElementById("login-live-tlbl");
+      const urgEl   = document.getElementById("login-live-urgente");
+      if(!timerEl) return;
+      if(S.subasta.estado !== "programada"){ renderLoginLivePanel(); return; }
+      const resto = inicioProg - Date.now();
+      if(resto <= 0){ renderLoginLivePanel(); return; }  // ya arrancó
+      const d = Math.floor(resto/86400000);
+      const h = Math.floor((resto%86400000)/3600000);
+      const m = Math.floor((resto%3600000)/60000);
+      const s = Math.floor((resto%60000)/1000);
+      timerEl.textContent = d>0 ? `${d}d ${pad(h)}h` : (h>0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`);
+      timerEl.style.color = "var(--gold)";
+      timerEl.style.animation = "";
+      if(tlblEl){ tlblEl.textContent = "Empieza en"; tlblEl.style.color = "var(--muted2)"; }
+      if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "⏳ ¡Prepárate para pujar!"; urgEl.style.color = "var(--gold)"; }
+    };
+    pintaProg();
+    if(loginLiveInt) clearInterval(loginLiveInt);
+    loginLiveInt = setInterval(pintaProg, 500);
+    return;
+  }
+
+  // ── MODO ACTIVA: en vivo ──
+  panel.style.borderColor = "var(--green)";
+  panel.style.background = "linear-gradient(135deg,rgba(0,230,122,.12),rgba(0,230,122,.02))";
+  const lblEncabezado = panel.querySelector(".login-live-head");
+  if(lblEncabezado){ lblEncabezado.textContent = "SUBASTA EN VIVO"; }
+  const plblEl = panel.querySelector(".login-live-plbl");
+  if(plblEl) plblEl.textContent = "Oferta actual";
   if(pujasEl){
     const n = S.pujas.length;
     pujasEl.textContent = n === 0 ? "Sé el primero en pujar" : `${n} puja${n!==1?"s":""}`;
