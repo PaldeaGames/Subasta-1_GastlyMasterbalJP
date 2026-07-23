@@ -1560,7 +1560,7 @@ body.express-tema #login-live-panel{
     <div class="winner-wrap" id="winner-wrap">
       <div class="winner-trophy">🏆</div>
       <div class="winner-title">¡SUBASTA FINALIZADA!</div>
-      <img id="w-img" src="" alt="" style="display:none;max-width:180px;max-height:220px;border-radius:10px;margin:10px auto;box-shadow:0 10px 30px rgba(0,0,0,.5);object-fit:contain">
+      <img id="w-img" src="" alt="Carta ganadora" style="display:none;max-width:180px;max-height:220px;border-radius:10px;margin:10px auto;box-shadow:0 10px 30px rgba(0,0,0,.5);object-fit:contain">
       <div class="winner-name" id="w-name">—</div>
       <div class="winner-ig" id="w-ig">—</div>
       <div class="winner-price" id="w-price">$0</div>
@@ -2188,6 +2188,9 @@ const PERFILES_REF = "perfiles";         // cada usuario solo el suyo
 // UID de Google autorizado como administrador (Paldea Games)
 const ADMIN_UIDS = ["X0EOuQd5wjW39ShnuSqhY8DZWs62"];
 
+// Procesar resultado de login por redirect (Instagram/Facebook in-app)
+manejarRedirectResult();
+
 // ══════════════════════════════════════
 //  ESTADO CENTRAL
 // ══════════════════════════════════════
@@ -2565,6 +2568,10 @@ function esNavegadorInApp(){
 }
 
 async function loginGoogle(){
+  // Mostrar/ocultar aviso de navegador in-app
+  const aviso = document.getElementById("aviso-inapp");
+  if(aviso){ aviso.style.display = esNavegadorInApp() ? "block" : "none"; }
+
   try{
     // Si está en navegador in-app, usar redirect (popup no funciona ahí)
     if(esNavegadorInApp()){
@@ -3003,11 +3010,27 @@ function renderApp(){
     document.getElementById("w-price").textContent = fmtCLP(S.lider.monto);
     // Imagen de la carta en el banner
     const wImg = document.getElementById("w-img");
-    if(wImg && S.carta.imgs && S.carta.imgs.length > 0){
-      wImg.src = S.carta.imgs[0];
-      wImg.style.display = "block";
-      wImg.onerror = () => { wImg.style.display = "none"; };
-    } else if(wImg) { wImg.style.display = "none"; }
+    if(wImg){
+      if(S.carta.imgs && S.carta.imgs.length > 0){
+        // Forzar recarga añadiendo timestamp para evitar caché
+        const imgUrl = S.carta.imgs[0];
+        wImg.src = imgUrl;
+        wImg.style.display = "block";
+        wImg.onload = () => { wImg.style.display = "block"; };
+        wImg.onerror = () => {
+          // Si falla, intentar con URL limpia (sin parámetros)
+          const cleanUrl = imgUrl.split('?')[0];
+          if(cleanUrl !== imgUrl){
+            wImg.src = cleanUrl;
+          } else {
+            wImg.style.display = "none";
+          }
+        };
+      } else {
+        wImg.style.display = "none";
+        wImg.src = "";
+      }
+    }
     // Modal exclusivo para quien ganó
     checkModalGanador();
     // Modal para 2° y 3° lugar
@@ -3039,11 +3062,13 @@ function renderApp(){
 function renderAdminGanador(){
   const box = document.getElementById("admin-ganador-box");
   if(!box) return;
-  if(!admin || !S.lider){ box.style.display = "none"; return; }
+  if(!admin || !S.lider || S.subasta.estado !== "finalizada"){ box.style.display = "none"; return; }
 
   box.style.display = "block";
-  // Guardar en historial si es una subasta finalizada con líder
-  guardarGanadorEnHistorial();
+  // Guardar en historial SOLO si la subasta está finalizada
+  if(S.subasta.estado === "finalizada"){
+    guardarGanadorEnHistorial();
+  }
   // CRÍTICO: solo usar el contacto confirmado si es DEL MISMO ganador actual.
   // Antes se mostraba P.ganadorConfirmado sin verificar el uid, así que el
   // WhatsApp/correo de un ganador anterior quedaba pegado sobre el ganador nuevo.
@@ -3186,7 +3211,9 @@ function checkModalGanador(){
 }
 
 let canalTop23Elegido = "ig";
-let top23Mostrado = false;
+let _setTop23Mostrado(false);
+function getTop23Mostrado(){ try{ return sessionStorage.getItem("paldea_top23_mostrado") === "1"; }catch(e){ return _top23Mostrado; } }
+function setTop23Mostrado(v){ _top23Mostrado = v; try{ sessionStorage.setItem("paldea_top23_mostrado", v ? "1" : "0"); }catch(e){} }
 
 function canalTop23(canal){
   canalTop23Elegido = canal;
@@ -3208,7 +3235,7 @@ function checkModalTop23(){
   if(!user || !S.lider) return;
   if(admin) return;
   if(S.subasta.estado !== "finalizada") return;
-  if(top23Mostrado) return;
+  if(getTop23Mostrado()) return;
 
   const top3 = topPujadores(3);
   // Encontrar la posición del usuario actual
@@ -3221,7 +3248,7 @@ function checkModalTop23(){
   // Solo mostrar si está en 2° o 3°
   if(miPos !== 2 && miPos !== 3) return;
 
-  top23Mostrado = true;
+  setTop23Mostrado(true);
   const titulo = document.getElementById("top23-titulo");
   const sub = document.getElementById("top23-sub");
   if(titulo) titulo.textContent = miPos === 2 ? "¡QUEDASTE EN 2° LUGAR!" : "¡QUEDASTE EN 3° LUGAR!";
@@ -3475,8 +3502,8 @@ function guardarGanadorEnHistorial(){
     const raw = localStorage.getItem(HISTORIAL_KEY);
     if(raw) hist = JSON.parse(raw);
   }catch(e){}
-  // Evitar duplicados exactos en la misma subasta (mismo uid + misma carta)
-  const yaExiste = hist.some(h => h.uid === registro.uid && h.carta === registro.carta && h.fecha === registro.fecha);
+  // Evitar duplicados: misma subasta = mismo uid + misma carta (sin importar fecha)
+  const yaExiste = hist.some(h => h.uid === registro.uid && h.carta === registro.carta);
   if(!yaExiste){
     hist.unshift(registro);
     // Mantener máximo 50 registros
@@ -4467,6 +4494,7 @@ function adminStart(){
     S.lider             = null;
     S.ganadorAvisado    = false;
     modalGanadorMostrado = false;
+    setTop23Mostrado(false);
     document.getElementById("winner-wrap").style.display="none";
     save({pujas:true, tiempo:true});
     renderApp();
@@ -4580,6 +4608,7 @@ function adminReset(){
   // S.bloqueados se conserva: quien fue bloqueado sigue bloqueado
   S.ganadorAvisado    = false;
   modalGanadorMostrado = false;
+  setTop23Mostrado(false);
   // Los datos sensibles viven en otra rama: borrarlos uno por uno
   (async () => {
     for(const v of (P.visitantes||[])){
@@ -5626,13 +5655,11 @@ function renderLoginLivePanel(){
   // ── MODO PROGRAMADA: cuenta regresiva hacia el INICIO ──
   if(programada && !activa){
     // Encabezado del panel: "PRÓXIMAMENTE" en vez de "EN VIVO"
-    panel.style.borderColor = "var(--gold)";
-    panel.style.background = "linear-gradient(135deg,rgba(245,200,66,.12),rgba(245,200,66,.02))";
-    if(pujasEl) pujasEl.textContent = "Precio de salida";
-    const plblEl = panel.querySelector(".login-live-plbl");
-    if(plblEl) plblEl.textContent = "Precio de salida";
     const lblEncabezado = panel.querySelector(".login-live-head");
     if(lblEncabezado){ lblEncabezado.textContent = "PRÓXIMAMENTE"; }
+    const plblEl = panel.querySelector(".login-live-plbl");
+    if(plblEl) plblEl.textContent = "Precio de salida";
+    if(pujasEl) pujasEl.textContent = "Precio de salida";
 
     const pintaProg = () => {
       const timerEl = document.getElementById("login-live-timer");
@@ -5647,10 +5674,39 @@ function renderLoginLivePanel(){
       const m = Math.floor((resto%3600000)/60000);
       const s = Math.floor((resto%60000)/1000);
       timerEl.textContent = d>0 ? `${d}d ${pad(h)}h` : (h>0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`);
-      timerEl.style.color = "var(--gold)";
-      timerEl.style.animation = "";
-      if(tlblEl){ tlblEl.textContent = "Empieza en"; tlblEl.style.color = "var(--muted2)"; }
-      if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "⏳ ¡Prepárate para pujar!"; urgEl.style.color = "var(--gold)"; }
+
+      // 🎯 COLORES DE URGENCIA para generar ansiedad de puja
+      const ultimoMin = resto <= 60000;   // <= 1 minuto
+      const pocosMin  = resto <= 300000;  // <= 5 minutos
+
+      if(ultimoMin){
+        // 🔴 ÚLTIMO MINUTO: rojo + parpadeo + "¡EMPIEZA YA!"
+        panel.style.borderColor = "var(--red)";
+        panel.style.background = "linear-gradient(135deg,rgba(255,59,92,.14),rgba(255,59,92,.04))";
+        panel.style.boxShadow = "0 0 30px rgba(255,59,92,.2)";
+        timerEl.style.color = "var(--red)";
+        timerEl.style.animation = "blink .8s infinite";
+        if(tlblEl){ tlblEl.textContent = "¡EMPIEZA YA!"; tlblEl.style.color = "var(--red)"; }
+        if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "🔥 ¡ÚLTIMO MINUTO!"; urgEl.style.color = "var(--red)"; }
+      } else if(pocosMin){
+        // 🟡 POCOS MINUTOS: dorado + aviso
+        panel.style.borderColor = "var(--gold)";
+        panel.style.background = "linear-gradient(135deg,rgba(245,200,66,.12),rgba(245,200,66,.02))";
+        panel.style.boxShadow = "0 0 20px rgba(245,200,66,.15)";
+        timerEl.style.color = "var(--gold)";
+        timerEl.style.animation = "";
+        if(tlblEl){ tlblEl.textContent = "Empieza en"; tlblEl.style.color = "var(--muted2)"; }
+        if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "⏰ ¡Quedan pocos minutos!"; urgEl.style.color = "var(--gold)"; }
+      } else {
+        // 🟢 NORMAL: verde tranquilo
+        panel.style.borderColor = "var(--green)";
+        panel.style.background = "linear-gradient(135deg,rgba(0,230,122,.1),rgba(0,230,122,.02))";
+        panel.style.boxShadow = "0 0 20px rgba(0,230,122,.1)";
+        timerEl.style.color = "var(--green)";
+        timerEl.style.animation = "";
+        if(tlblEl){ tlblEl.textContent = "Empieza en"; tlblEl.style.color = "var(--muted2)"; }
+        if(urgEl) urgEl.style.display = "none";
+      }
     };
     pintaProg();
     if(loginLiveInt) clearInterval(loginLiveInt);
@@ -5776,6 +5832,19 @@ function renderLoginInfo(){
 //  NAVEGACIÓN CON TECLADO
 // ══════════════════════════════════════
 document.addEventListener("keydown", e => {
+  // Cerrar modales con ESC (antes de procesar lightbox)
+  if(e.key === "Escape"){
+    const modals = ["modal-ganador", "modal-top23", "modal-gracias"];
+    for(const id of modals){
+      const el = document.getElementById(id);
+      if(el && el.classList.contains("open")){
+        el.classList.remove("open");
+        e.preventDefault();
+        return;
+      }
+    }
+  }
+
   const lb = document.getElementById("lightbox");
   const lbOpen = lb && lb.classList.contains("open");
 
@@ -5819,37 +5888,38 @@ document.addEventListener("keydown", e => {
 function generarHistoriaGanador(){
   if(!S.lider){ toast("No hay ganador aún","warn"); return; }
 
-  const canvas = document.createElement("canvas");
-  canvas.width = 1080;
-  canvas.height = 1920;
-  const ctx = canvas.getContext("2d");
+  try{
+    const canvas = document.createElement("canvas");
+    canvas.width = 1080;
+    canvas.height = 1920;
+    const ctx = canvas.getContext("2d");
+    if(!ctx){ toast("Error al crear canvas","err"); return; }
 
-  // Fondo degradado oscuro
-  const grad = ctx.createLinearGradient(0, 0, 0, 1920);
-  grad.addColorStop(0, "#1a0a3a");
-  grad.addColorStop(0.5, "#0d0620");
-  grad.addColorStop(1, "#07070d");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, 1080, 1920);
+    // Fondo degradado oscuro
+    const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+    grad.addColorStop(0, "#1a0a3a");
+    grad.addColorStop(0.5, "#0d0620");
+    grad.addColorStop(1, "#07070d");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, 1080, 1920);
 
-  // Textura sutil de ruido (simulada con puntos)
-  ctx.fillStyle = "rgba(255,255,255,0.015)";
-  for(let i = 0; i < 300; i++){
-    const x = Math.random() * 1080;
-    const y = Math.random() * 1920;
-    const s = Math.random() * 2;
-    ctx.fillRect(x, y, s, s);
-  }
+    // Textura sutil de ruido (simulada con puntos)
+    ctx.fillStyle = "rgba(255,255,255,0.015)";
+    for(let i = 0; i < 300; i++){
+      const x = Math.random() * 1080;
+      const y = Math.random() * 1920;
+      const s = Math.random() * 2;
+      ctx.fillRect(x, y, s, s);
+    }
 
-  // Logo Paldea Games
-  ctx.fillStyle = "#f5c842";
-  ctx.font = "bold 52px 'Bebas Neue', sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("PALDEA GAMES", 540, 140);
-  ctx.fillStyle = "#5a5a80";
-  ctx.font = "24px 'Outfit', sans-serif";
-  ctx.letterSpacing = "4px";
-  ctx.fillText("SISTEMA DE SUBASTAS", 540, 180);
+    // Logo Paldea Games (fallback a fuentes del sistema si las custom no cargan)
+    ctx.fillStyle = "#f5c842";
+    ctx.textAlign = "center";
+    ctx.font = "bold 52px Arial, sans-serif";
+    ctx.fillText("PALDEA GAMES", 540, 140);
+    ctx.fillStyle = "#5a5a80";
+    ctx.font = "24px Arial, sans-serif";
+    ctx.fillText("SISTEMA DE SUBASTAS", 540, 180);
 
   // Línea decorativa
   ctx.strokeStyle = "rgba(245,200,66,0.3)";
@@ -5869,21 +5939,21 @@ function generarHistoriaGanador(){
     ctx.lineWidth = 8;
     ctx.strokeRect(-220, -60, 440, 120);
     ctx.fillStyle = "#ff3b5c";
-    ctx.font = "bold 90px 'Bebas Neue', sans-serif";
+    ctx.font = "bold 90px Arial, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("¡VENDIDO!", 0, 25);
     ctx.restore();
 
     // Nombre del ganador
     ctx.fillStyle = "#ececf5";
-    ctx.font = "bold 48px 'Outfit', sans-serif";
+    ctx.font = "bold 48px Arial, sans-serif";
     ctx.textAlign = "center";
     const nombre = S.lider.nombre || "Ganador";
     ctx.fillText(nombre.length > 20 ? nombre.slice(0, 18) + "..." : nombre, 540, 580);
 
     // Monto
     ctx.fillStyle = "#f5c842";
-    ctx.font = "bold 110px 'JetBrains Mono', monospace";
+    ctx.font = "bold 110px Arial, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText(fmtCLP(S.lider.monto), 540, 740);
 
@@ -5897,26 +5967,31 @@ function generarHistoriaGanador(){
 
     // Carta
     ctx.fillStyle = "#8888aa";
-    ctx.font = "32px 'Outfit', sans-serif";
+    ctx.font = "32px Arial, sans-serif";
     ctx.textAlign = "center";
     const cartaTxt = [S.carta.titulo, S.carta.set].filter(Boolean).join(" · ");
     ctx.fillText(cartaTxt.length > 35 ? cartaTxt.slice(0, 33) + "..." : cartaTxt, 540, 840);
 
     // Footer
     ctx.fillStyle = "#5a5a80";
-    ctx.font = "24px 'Outfit', sans-serif";
+    ctx.font = "24px Arial, sans-serif";
     ctx.textAlign = "center";
     ctx.fillText("@paldea.games · Paldea Games", 540, 1860);
 
     // Descargar
     try{
       const link = document.createElement("a");
-      link.download = `ganador-${S.carta.titulo.replace(/[^a-zA-Z0-9]/g,"-")}.png`;
-      link.href = canvas.toDataURL("image/png");
+      const safeName = (S.carta.titulo || "carta").replace(/[^a-zA-Z0-9]/g,"-").substring(0,30);
+      link.download = `ganador-${safeName}.png`;
+      const dataUrl = canvas.toDataURL("image/png");
+      link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       toast("📱 Historia generada y descargada","ok");
     }catch(e){
-      toast("No se pudo generar la imagen (posible problema CORS con la foto)","warn");
+      console.error("Error al generar historia:", e);
+      toast("No se pudo descargar. Intenta con otra foto o revisa la consola.","err");
     }
   };
 
@@ -5945,6 +6020,10 @@ function generarHistoriaGanador(){
     img.src = S.carta.imgs[0];
   } else {
     dibujarTexto();
+  }
+  }catch(e){
+    console.error("Error en generarHistoriaGanador:", e);
+    toast("Error al generar la historia. Revisa la consola.","err");
   }
 }
 
