@@ -1360,7 +1360,7 @@ body.express-tema #login-live-panel{
             <div id="login-live-urgente" style="font-size:10px;font-weight:700;color:var(--red);margin-top:3px;display:none">⏰ ¡Últimos minutos!</div>
           </div>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:13px;line-height:1.4">Inicia sesión abajo para pujar 👇</div>
+        
       </div>
 
       <!-- Carta en subasta -->
@@ -1432,6 +1432,13 @@ body.express-tema #login-live-panel{
 
       <!-- PASO 1: Google -->
       <div id="paso-google">
+        <div id="aviso-inapp" style="display:none;background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.25);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted2);line-height:1.6;text-align:center">
+          <div style="font-weight:700;color:var(--red);margin-bottom:4px">⚠️ Navegador embebido detectado</div>
+          Instagram/Facebook bloquean el login de Google. Si no funciona, abre este link en Chrome o Safari.
+          <div style="margin-top:8px;display:flex;gap:8px;justify-content:center">
+            <button onclick="copiarLinkSubasta()" style="background:var(--s3);border:1px solid var(--border2);color:var(--text);padding:6px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif">📋 Copiar link</button>
+          </div>
+        </div>
         <button class="btn-google" onclick="loginGoogle()">
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
           Continuar con Google
@@ -1529,10 +1536,19 @@ body.express-tema #login-live-panel{
       </div>
       <div id="ag-nota" style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5"></div>
 
+      <!-- Contactos de respaldo (2° y 3° lugar) -->
+      <div id="ag-top23-box" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(245,200,66,.2)">
+        <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2);margin-bottom:8px">📋 Contactos de respaldo</div>
+        <div id="ag-top23-lista"></div>
+      </div>
+
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(245,200,66,.2)">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
           <div style="font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)">✉️ Mensaje para el ganador</div>
-          <button onclick="copiarMensajeGanador()" style="background:var(--gold);color:#07070d;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap">📋 Copiar mensaje</button>
+          <div style="display:flex;gap:6px">
+            <button onclick="generarHistoriaGanador()" style="background:linear-gradient(135deg,#ff6a1a,#ff3b5c);color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap">📱 Historia IG</button>
+            <button onclick="copiarMensajeGanador()" style="background:var(--gold);color:#07070d;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap">📋 Copiar mensaje</button>
+          </div>
         </div>
         <textarea id="ag-mensaje" rows="9"
           style="width:100%;background:var(--s2);border:1.5px solid var(--border2);border-radius:9px;color:var(--text);padding:10px 12px;font-size:12px;line-height:1.55;font-family:'Outfit',sans-serif;outline:none;resize:vertical;box-sizing:border-box"></textarea>
@@ -1544,6 +1560,7 @@ body.express-tema #login-live-panel{
     <div class="winner-wrap" id="winner-wrap">
       <div class="winner-trophy">🏆</div>
       <div class="winner-title">¡SUBASTA FINALIZADA!</div>
+      <img id="w-img" src="" alt="" style="display:none;max-width:180px;max-height:220px;border-radius:10px;margin:10px auto;box-shadow:0 10px 30px rgba(0,0,0,.5);object-fit:contain">
       <div class="winner-name" id="w-name">—</div>
       <div class="winner-ig" id="w-ig">—</div>
       <div class="winner-price" id="w-price">$0</div>
@@ -1638,7 +1655,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v23</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v24</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -1902,11 +1919,28 @@ body.express-tema #login-live-panel{
           <div style="display:flex;align-items:center;gap:8px">
             <div style="font-size:10px;color:var(--muted2)" id="stat-total-text">0 personas</div>
             <button onclick="exportarCorreos()" style="background:none;border:1px solid var(--border);color:var(--muted2);padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer;font-family:'Outfit',sans-serif" title="Copiar correos que aceptaron marketing">📩 Exportar</button>
+            <button onclick="copiarNombreCorreo()" style="background:none;border:1px solid var(--border);color:var(--muted2);padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer;font-family:'Outfit',sans-serif" title="Copiar nombre y correo de todos">📋 Nombre+Correo</button>
           </div>
         </div>
         <div id="stat-lista" style="max-height:200px;overflow-y:auto">
           <div style="padding:16px;text-align:center;font-size:12px;color:var(--muted2)">Aún no hay participantes</div>
         </div>
+      </div>
+
+      <!-- Historial de Ganadores -->
+      <div class="sep"></div>
+      <div class="section-label" style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <span>🏆 Historial de ganadores</span>
+        <span id="historial-contador" style="font-size:11px;color:var(--muted2)">0 registros</span>
+      </div>
+      <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px">
+        <div id="historial-ganadores-lista" style="max-height:200px;overflow-y:auto">
+          <div style="padding:16px;text-align:center;font-size:12px;color:var(--muted2)">Aún no hay ganadores registrados</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="a-btn-sm" onclick="copiarTodoHistorial()" style="flex:1">📋 Copiar todo</button>
+        <button class="a-btn-sm" onclick="borrarHistorial()" style="color:var(--red);border-color:rgba(255,59,92,.3)">🗑 Borrar</button>
       </div>
     </div>
 
@@ -2053,6 +2087,50 @@ body.express-tema #login-live-panel{
   </div>
 </div>
 
+<!-- Modal para 2° y 3° lugar -->
+<div class="modal-overlay" id="modal-top23">
+  <div class="modal-box" style="max-width:420px">
+    <div style="font-size:48px;margin-bottom:8px">🥈</div>
+    <div class="modal-title" style="color:var(--gold);font-size:22px" id="top23-titulo">¡QUEDASTE EN 2° LUGAR!</div>
+    <div class="modal-sub" style="margin-bottom:16px" id="top23-sub">
+      El ganador tiene 1 hora para pagar. Si no lo hace, te contactaremos a ti.
+    </div>
+
+    <div style="background:rgba(0,230,122,.08);border:1px solid rgba(0,230,122,.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--muted2);line-height:1.6;text-align:left">
+      💡 Déjanos tu contacto para que podamos escribirte de inmediato si el ganador no paga.
+    </div>
+
+    <!-- Selector de canal -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <button id="tab-top23-ig" class="tab-canal activo" onclick="canalTop23('ig')">📷 Instagram</button>
+      <button id="tab-top23-wa" class="tab-canal" onclick="canalTop23('wa')">💬 WhatsApp</button>
+    </div>
+
+    <!-- Instagram -->
+    <div id="campo-top23-ig" class="field" style="text-align:left">
+      <label>Tu Instagram</label>
+      <div style="position:relative">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted2);font-size:16px;font-weight:600;pointer-events:none">@</span>
+        <input id="top23-ig" type="text" placeholder="tu_usuario" autocomplete="off" style="padding-left:30px;width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);padding-top:13px;padding-bottom:13px;padding-right:14px;font-size:15px;font-family:'Outfit',sans-serif;outline:none" oninput="this.value=this.value.replace(/^@+/,'')">
+      </div>
+    </div>
+
+    <!-- WhatsApp -->
+    <div id="campo-top23-wa" class="field" style="text-align:left;display:none">
+      <label>Tu número de WhatsApp</label>
+      <div style="position:relative">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:15px;font-weight:700;pointer-events:none;font-family:'JetBrains Mono',monospace">+56</span>
+        <input id="top23-wa" type="tel" inputmode="numeric" placeholder="9 8765 4321" autocomplete="off" style="padding-left:62px;width:100%;background:var(--s2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);padding-top:13px;padding-bottom:13px;padding-right:14px;font-size:15px;font-family:'JetBrains Mono',monospace;letter-spacing:1px;outline:none" oninput="limpiarWaTop23(this)">
+      </div>
+    </div>
+
+    <button class="btn-primary" style="margin-top:10px" onclick="confirmarTop23()">DEJAR MI CONTACTO</button>
+    <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">
+      Solo te contactaremos si el ganador no paga en 1 hora.
+    </div>
+  </div>
+</div>
+
 <!-- Popup de agradecimiento tras confirmar el contacto -->
 <div class="modal-overlay" id="modal-gracias">
   <div class="modal-box" style="max-width:380px;text-align:center">
@@ -2084,7 +2162,7 @@ body.express-tema #login-live-panel{
 // ══════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, push, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDYHCQ0n74xoCW-JzYQ-OPYF_efcPni3OE",
@@ -2096,7 +2174,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v23 — 20 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v24 — 23 jul 2026","color:#f5c842;font-weight:bold");
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -2480,8 +2558,19 @@ let googleUser = null; // datos verificados de Google
 
 
 // ── Login con Google ──
+// Detecta si está en navegador in-app (Instagram, Facebook, etc.)
+function esNavegadorInApp(){
+  const ua = navigator.userAgent || navigator.vendor || window.opera || "";
+  return /Instagram|FBAN|FBAV|Twitter|Line|WebView/i.test(ua);
+}
+
 async function loginGoogle(){
   try{
+    // Si está en navegador in-app, usar redirect (popup no funciona ahí)
+    if(esNavegadorInApp()){
+      await signInWithRedirect(auth, googleProvider);
+      return; // La página se recargará al volver
+    }
     const result = await signInWithPopup(auth, googleProvider);
     const u = result.user;
     googleUser = {
@@ -2506,6 +2595,28 @@ async function loginGoogle(){
       toast("Este sitio no está autorizado. Avisa a @paldea.games","err");
     } else {
       toast("No se pudo iniciar sesión. Reintenta.","err");
+    }
+  }
+}
+
+// Manejar el resultado del redirect al cargar la página
+async function manejarRedirectResult(){
+  try{
+    const result = await getRedirectResult(auth);
+    if(result && result.user){
+      const u = result.user;
+      googleUser = {
+        uid:    u.uid,
+        nombre: u.displayName || "Sin nombre",
+        email:  u.email || "",
+        foto:   u.photoURL || ""
+      };
+      mostrarPasoDatos();
+    }
+  }catch(err){
+    console.error("Redirect result error:", err);
+    if(err.code === "auth/unauthorized-domain"){
+      toast("Este dominio no está autorizado en Firebase. Avisa a @paldea.games","err");
     }
   }
 }
@@ -2815,7 +2926,7 @@ function renderApp(){
               </div>
               <div style="font-size:11px;color:var(--muted2);display:flex;align-items:center;gap:5px">
                 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.email || "")}</span>
-                ${v.email ? `<button onclick="copiarContacto('${escJs(v.email)}')" title="Copiar correo" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0;line-height:1;flex-shrink:0" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">📋</button>` : ""}
+                ${v.email ? `<button onclick="copiarContacto('${escJs(v.nombre + " | " + v.email)}')" title="Copiar nombre+correo" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:10px;padding:0;line-height:1;flex-shrink:0" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--muted)'">📋</button>` : ""}
               </div>
               <div style="font-size:11px;color:var(--muted)">${v.ig ? esc(v.ig)+" · " : ""}${v.entrada}</div>
             </div>
@@ -2890,8 +3001,17 @@ function renderApp(){
     }
 
     document.getElementById("w-price").textContent = fmtCLP(S.lider.monto);
+    // Imagen de la carta en el banner
+    const wImg = document.getElementById("w-img");
+    if(wImg && S.carta.imgs && S.carta.imgs.length > 0){
+      wImg.src = S.carta.imgs[0];
+      wImg.style.display = "block";
+      wImg.onerror = () => { wImg.style.display = "none"; };
+    } else if(wImg) { wImg.style.display = "none"; }
     // Modal exclusivo para quien ganó
     checkModalGanador();
+    // Modal para 2° y 3° lugar
+    checkModalTop23();
     // Panel de contacto (solo admin)
     renderAdminGanador();
   } else if(sub.estado==="finalizada" && !S.lider){
@@ -2922,6 +3042,8 @@ function renderAdminGanador(){
   if(!admin || !S.lider){ box.style.display = "none"; return; }
 
   box.style.display = "block";
+  // Guardar en historial si es una subasta finalizada con líder
+  guardarGanadorEnHistorial();
   // CRÍTICO: solo usar el contacto confirmado si es DEL MISMO ganador actual.
   // Antes se mostraba P.ganadorConfirmado sin verificar el uid, así que el
   // WhatsApp/correo de un ganador anterior quedaba pegado sobre el ganador nuevo.
@@ -2987,6 +3109,30 @@ function copiarContacto(txt){
     .catch(()=> prompt("Copia el contacto:", txt));
 }
 
+
+  // Renderizar contactos de 2°/3° lugar
+  const top23Box = document.getElementById("ag-top23-box");
+  const top23Lista = document.getElementById("ag-top23-lista");
+  if(top23Box && top23Lista){
+    get(ref(db, `${PRIVADO_REF}/contactoTop23`)).then(snap => {
+      if(!snap.exists()){ top23Box.style.display = "none"; return; }
+      const datos = snap.val();
+      const items = [];
+      if(datos.segundo) items.push({...datos.segundo, label: "🥈 2° lugar"});
+      if(datos.tercero) items.push({...datos.tercero, label: "🥉 3° lugar"});
+      if(items.length === 0){ top23Box.style.display = "none"; return; }
+      top23Box.style.display = "block";
+      top23Lista.innerHTML = items.map(it => `
+        <div style="background:var(--s2);border:1px solid var(--border2);border-radius:8px;padding:10px 12px;margin-bottom:6px;font-size:12px">
+          <div style="font-weight:700;color:var(--gold);margin-bottom:4px">${it.label}</div>
+          <div style="color:var(--text)">${esc(it.nombre)}</div>
+          <div style="font-size:11px;color:var(--muted2)">${it.ig || it.whatsapp || it.email || "—"}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${it.hora || ""}</div>
+        </div>
+      `).join("");
+    }).catch(() => { top23Box.style.display = "none"; });
+  }
+
 function contactoGanador(){
   const g = P.ganadorConfirmado;
   if(g && g.whatsapp) return { valor:g.whatsapp, tipo:"wa" };
@@ -3038,6 +3184,115 @@ function checkModalGanador(){
   if(gi && user.ig) gi.value = user.ig.replace("@","");
   document.getElementById("modal-ganador").classList.add("open");
 }
+
+let canalTop23Elegido = "ig";
+let top23Mostrado = false;
+
+function canalTop23(canal){
+  canalTop23Elegido = canal;
+  const esIg = canal === "ig";
+  document.getElementById("tab-top23-ig").classList.toggle("activo", esIg);
+  document.getElementById("tab-top23-wa").classList.toggle("activo", !esIg);
+  document.getElementById("campo-top23-ig").style.display = esIg ? "block" : "none";
+  document.getElementById("campo-top23-wa").style.display = esIg ? "none" : "block";
+}
+
+function limpiarWaTop23(el){
+  let v = el.value.replace(/[^0-9]/g,"");
+  if(v.length >= 10 && v.startsWith("56")) v = v.slice(2);
+  el.value = v.slice(0,9);
+}
+
+function checkModalTop23(){
+  if(isTVMode) return;
+  if(!user || !S.lider) return;
+  if(admin) return;
+  if(S.subasta.estado !== "finalizada") return;
+  if(top23Mostrado) return;
+
+  const top3 = topPujadores(3);
+  // Encontrar la posición del usuario actual
+  let miPos = -1;
+  for(let i = 0; i < top3.length; i++){
+    const p = top3[i];
+    const soyYo = p.uid ? (p.uid === user.uid) : (p.ig === user.ig);
+    if(soyYo) { miPos = i + 1; break; }
+  }
+  // Solo mostrar si está en 2° o 3°
+  if(miPos !== 2 && miPos !== 3) return;
+
+  top23Mostrado = true;
+  const titulo = document.getElementById("top23-titulo");
+  const sub = document.getElementById("top23-sub");
+  if(titulo) titulo.textContent = miPos === 2 ? "¡QUEDASTE EN 2° LUGAR!" : "¡QUEDASTE EN 3° LUGAR!";
+  if(sub) sub.textContent = miPos === 2
+    ? "El ganador tiene 1 hora para pagar. Si no lo hace, te contactaremos a ti como siguiente opción."
+    : "Si el ganador y el 2° lugar no pagan, te contactaremos a ti.";
+
+  // Pre-llenar Instagram si lo tenemos
+  const igInput = document.getElementById("top23-ig");
+  if(igInput && user.ig) igInput.value = user.ig.replace("@","");
+
+  document.getElementById("modal-top23").classList.add("open");
+}
+
+function confirmarTop23(){
+  let igFinal = "", waFinal = "";
+
+  if(canalTop23Elegido === "ig"){
+    const el = document.getElementById("top23-ig");
+    const ig = el.value.trim().replace(/^@+/,"");
+    if(!ig){ el.style.borderColor = "var(--red)"; toast("Necesitamos tu Instagram","err"); return; }
+    if(!/^[A-Za-z0-9._]+$/.test(ig)){ toast("Usuario de Instagram inválido","err"); return; }
+    el.style.borderColor = "";
+    igFinal = "@" + ig;
+  } else {
+    const el = document.getElementById("top23-wa");
+    let wa = el.value.replace(/[^0-9]/g,"");
+    if(wa.length >= 10 && wa.startsWith("56")) wa = wa.slice(2);
+    if(wa.length !== 9 || !wa.startsWith("9")){ toast("Número inválido. 9 dígitos empezando con 9.","err"); return; }
+    el.style.borderColor = "";
+    waFinal = "+56" + wa;
+  }
+
+  const datos = {
+    uid:      user.uid || "",
+    nombre:   user.nombre,
+    email:    user.email || "",
+    ig:       igFinal,
+    whatsapp: waFinal,
+    canal:    canalTop23Elegido,
+    hora:     fmtTime(new Date()),
+    posicion: canalTop23Elegido === "ig" ? 2 : 3  // placeholder, se calcula real abajo
+  };
+
+  // Determinar posición real
+  const top3 = topPujadores(3);
+  for(let i = 0; i < top3.length; i++){
+    const p = top3[i];
+    const soyYo = p.uid ? (p.uid === user.uid) : (p.ig === user.ig);
+    if(soyYo) { datos.posicion = i + 1; break; }
+  }
+
+  // Guardar en rama privada
+  const posKey = datos.posicion === 2 ? "segundo" : "tercero";
+  set(ref(db, `${PRIVADO_REF}/contactoTop23/${posKey}`), datos)
+    .then(() => {
+      document.getElementById("modal-top23").classList.remove("open");
+      toast("✅ Contacto guardado. Te avisaremos si corresponde.","ok");
+      if(igFinal) user.ig = igFinal;
+      try{ sessionStorage.setItem("subasta_user", JSON.stringify(user)); }catch(e){}
+    })
+    .catch(err => {
+      console.error("Error al guardar contacto top23:", err);
+      toast("No se pudo guardar. Reintenta.","err");
+    });
+}
+
+function cerrarModalTop23(){
+  document.getElementById("modal-top23").classList.remove("open");
+}
+
 
 let canalElegido = "ig";
 
@@ -3195,6 +3450,95 @@ function resetConfirmGanador(){
   if(rev) rev.style.display = "none";
   const btn = document.querySelector("#modal-ganador .btn-primary");
   if(btn) btn.textContent = "CONFIRMAR MIS DATOS";
+}
+
+
+// ══════════════════════════════════════
+//  HISTORIAL DE GANADORES (localStorage)
+// ══════════════════════════════════════
+const HISTORIAL_KEY = "paldea_historial_ganadores";
+
+function guardarGanadorEnHistorial(){
+  if(!S.lider) return;
+  const registro = {
+    fecha:      new Date().toISOString(),
+    carta:      S.carta.titulo || "",
+    set:        S.carta.set || "",
+    ganador:    S.lider.nombre || "",
+    email:      S.lider.email || "",
+    monto:      S.lider.monto || 0,
+    instagram:  S.lider.ig || "",
+    uid:        S.lider.uid || ""
+  };
+  let hist = [];
+  try{
+    const raw = localStorage.getItem(HISTORIAL_KEY);
+    if(raw) hist = JSON.parse(raw);
+  }catch(e){}
+  // Evitar duplicados exactos en la misma subasta (mismo uid + misma carta)
+  const yaExiste = hist.some(h => h.uid === registro.uid && h.carta === registro.carta && h.fecha === registro.fecha);
+  if(!yaExiste){
+    hist.unshift(registro);
+    // Mantener máximo 50 registros
+    if(hist.length > 50) hist = hist.slice(0, 50);
+    try{ localStorage.setItem(HISTORIAL_KEY, JSON.stringify(hist)); }catch(e){}
+  }
+}
+
+function obtenerHistorial(){
+  try{
+    const raw = localStorage.getItem(HISTORIAL_KEY);
+    return raw ? JSON.parse(raw) : [];
+  }catch(e){ return []; }
+}
+
+function renderHistorialGanadores(){
+  const cont = document.getElementById("historial-ganadores-lista");
+  if(!cont) return;
+  const hist = obtenerHistorial();
+  if(hist.length === 0){
+    cont.innerHTML = '<div style="padding:12px;text-align:center;font-size:12px;color:var(--muted2)">Aún no hay ganadores registrados</div>';
+    return;
+  }
+  cont.innerHTML = hist.map((h,i) => `
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <div style="min-width:0;flex:1">
+          <div style="font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(h.carta)}</div>
+          <div style="font-size:11px;color:var(--muted2)">${esc(h.ganador)} · ${fmtCLP(h.monto)}</div>
+          <div style="font-size:10px;color:var(--muted)">${new Date(h.fecha).toLocaleDateString("es-CL")}</div>
+        </div>
+        <button onclick="copiarRegistroHistorial(${i})" title="Copiar datos" style="background:var(--s3);border:1px solid var(--border2);color:var(--muted2);padding:4px 8px;border-radius:5px;font-size:10px;cursor:pointer;font-family:'Outfit',sans-serif;flex-shrink:0">📋</button>
+      </div>
+    </div>
+  `).join("");
+}
+
+function copiarRegistroHistorial(idx){
+  const hist = obtenerHistorial();
+  if(!hist[idx]) return;
+  const h = hist[idx];
+  const texto = `Ganador: ${h.ganador}\nCarta: ${h.carta}\nMonto: ${fmtCLP(h.monto)}\nEmail: ${h.email || "—"}\nInstagram: ${h.instagram || "—"}\nFecha: ${new Date(h.fecha).toLocaleDateString("es-CL")}`;
+  navigator.clipboard.writeText(texto)
+    .then(() => toast("📋 Datos del ganador copiados","ok"))
+    .catch(() => prompt("Copia los datos:", texto));
+}
+
+function copiarTodoHistorial(){
+  const hist = obtenerHistorial();
+  if(hist.length === 0){ toast("Historial vacío","warn"); return; }
+  const lineas = hist.map(h => `${h.ganador} | ${h.carta} | ${fmtCLP(h.monto)} | ${h.email || "—"} | ${new Date(h.fecha).toLocaleDateString("es-CL")}`);
+  const texto = lineas.join("\n");
+  navigator.clipboard.writeText(texto)
+    .then(() => toast(`📋 ${hist.length} ganador${hist.length!==1?"es":""} copiado${hist.length!==1?"s":""}`,"ok"))
+    .catch(() => prompt("Copia el historial:", texto));
+}
+
+function borrarHistorial(){
+  if(!confirm("¿Borrar TODO el historial de ganadores?\n\nEsta acción no se puede deshacer.")) return;
+  try{ localStorage.removeItem(HISTORIAL_KEY); }catch(e){}
+  renderHistorialGanadores();
+  toast("Historial borrado","warn");
 }
 
 function enviarGanador(igFinal, waFinal){
@@ -3932,6 +4276,10 @@ function toggleAdmin(){
 
 function fillAdminFields(){
   llenarHoras();
+  renderHistorialGanadores();
+  const hist = obtenerHistorial();
+  const cnt = document.getElementById("historial-contador");
+  if(cnt) cnt.textContent = `${hist.length} registro${hist.length!==1?"s":""}`;
   document.getElementById("a-title").value    = S.carta.titulo;
   document.getElementById("a-set").value      = S.carta.set;
   document.getElementById("a-set-es").value   = S.carta.setEs||"";
@@ -4860,6 +5208,20 @@ function contactoDe(uid){
   return (P.visitantes||[]).find(v => v.uid === uid) || null;
 }
 
+
+// Devuelve los top N pujadores distintos (por mejor puja)
+function topPujadores(n=3){
+  if(!S.pujas || S.pujas.length === 0) return [];
+  const mejores = {};
+  S.pujas.forEach(p => {
+    const k = p.uid || p.ig || p.nombre;
+    if(!mejores[k] || p.monto > mejores[k].monto) mejores[k] = p;
+  });
+  return Object.values(mejores)
+    .sort((a,b) => (b.monto - a.monto) || (a.timestamp - b.timestamp))
+    .slice(0, n);
+}
+
 function recalcularLider(){
   if(!S.pujas || S.pujas.length === 0){
     S.lider = null;
@@ -5452,6 +5814,148 @@ document.addEventListener("keydown", e => {
 });
 
 // ── Exponer funciones al scope global (necesario para type="module") ──
+
+// Genera una imagen 1080x1920 (formato historia Instagram) con los datos del ganador
+function generarHistoriaGanador(){
+  if(!S.lider){ toast("No hay ganador aún","warn"); return; }
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1920;
+  const ctx = canvas.getContext("2d");
+
+  // Fondo degradado oscuro
+  const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+  grad.addColorStop(0, "#1a0a3a");
+  grad.addColorStop(0.5, "#0d0620");
+  grad.addColorStop(1, "#07070d");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 1080, 1920);
+
+  // Textura sutil de ruido (simulada con puntos)
+  ctx.fillStyle = "rgba(255,255,255,0.015)";
+  for(let i = 0; i < 300; i++){
+    const x = Math.random() * 1080;
+    const y = Math.random() * 1920;
+    const s = Math.random() * 2;
+    ctx.fillRect(x, y, s, s);
+  }
+
+  // Logo Paldea Games
+  ctx.fillStyle = "#f5c842";
+  ctx.font = "bold 52px 'Bebas Neue', sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("PALDEA GAMES", 540, 140);
+  ctx.fillStyle = "#5a5a80";
+  ctx.font = "24px 'Outfit', sans-serif";
+  ctx.letterSpacing = "4px";
+  ctx.fillText("SISTEMA DE SUBASTAS", 540, 180);
+
+  // Línea decorativa
+  ctx.strokeStyle = "rgba(245,200,66,0.3)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(340, 210);
+  ctx.lineTo(740, 210);
+  ctx.stroke();
+
+  // Imagen de la carta (si existe)
+  const dibujarTexto = () => {
+    // Sello VENDIDO
+    ctx.save();
+    ctx.translate(540, 420);
+    ctx.rotate(-8 * Math.PI / 180);
+    ctx.strokeStyle = "#ff3b5c";
+    ctx.lineWidth = 8;
+    ctx.strokeRect(-220, -60, 440, 120);
+    ctx.fillStyle = "#ff3b5c";
+    ctx.font = "bold 90px 'Bebas Neue', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("¡VENDIDO!", 0, 25);
+    ctx.restore();
+
+    // Nombre del ganador
+    ctx.fillStyle = "#ececf5";
+    ctx.font = "bold 48px 'Outfit', sans-serif";
+    ctx.textAlign = "center";
+    const nombre = S.lider.nombre || "Ganador";
+    ctx.fillText(nombre.length > 20 ? nombre.slice(0, 18) + "..." : nombre, 540, 580);
+
+    // Monto
+    ctx.fillStyle = "#f5c842";
+    ctx.font = "bold 110px 'JetBrains Mono', monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(fmtCLP(S.lider.monto), 540, 740);
+
+    // Línea
+    ctx.strokeStyle = "rgba(245,200,66,0.2)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(290, 780);
+    ctx.lineTo(790, 780);
+    ctx.stroke();
+
+    // Carta
+    ctx.fillStyle = "#8888aa";
+    ctx.font = "32px 'Outfit', sans-serif";
+    ctx.textAlign = "center";
+    const cartaTxt = [S.carta.titulo, S.carta.set].filter(Boolean).join(" · ");
+    ctx.fillText(cartaTxt.length > 35 ? cartaTxt.slice(0, 33) + "..." : cartaTxt, 540, 840);
+
+    // Footer
+    ctx.fillStyle = "#5a5a80";
+    ctx.font = "24px 'Outfit', sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("@paldea.games · Paldea Games", 540, 1860);
+
+    // Descargar
+    try{
+      const link = document.createElement("a");
+      link.download = `ganador-${S.carta.titulo.replace(/[^a-zA-Z0-9]/g,"-")}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast("📱 Historia generada y descargada","ok");
+    }catch(e){
+      toast("No se pudo generar la imagen (posible problema CORS con la foto)","warn");
+    }
+  };
+
+  if(S.carta.imgs && S.carta.imgs.length > 0){
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      // Dibujar carta centrada arriba
+      const maxW = 500, maxH = 500;
+      let w = img.width, h = img.height;
+      const scale = Math.min(maxW/w, maxH/h, 1);
+      w *= scale; h *= scale;
+      const x = (1080 - w) / 2;
+      const y = 280;
+      // Sombra
+      ctx.shadowColor = "rgba(0,0,0,0.6)";
+      ctx.shadowBlur = 40;
+      ctx.shadowOffsetY = 20;
+      ctx.drawImage(img, x, y, w, h);
+      ctx.shadowColor = "transparent";
+      dibujarTexto();
+    };
+    img.onerror = () => {
+      dibujarTexto();
+    };
+    img.src = S.carta.imgs[0];
+  } else {
+    dibujarTexto();
+  }
+}
+
+
+function copiarLinkSubasta(){
+  const url = window.location.href;
+  navigator.clipboard.writeText(url)
+    .then(() => toast("📋 Link copiado — pégalo en Chrome/Safari","ok"))
+    .catch(() => prompt("Copia este link y ábrelo en Chrome o Safari:", url));
+}
+
 window.doLogin         = doLogin;
 window.loginGoogle     = loginGoogle;
 window.cancelarGoogle  = cancelarGoogle;
@@ -5502,6 +6006,16 @@ window.aplicarHora      = aplicarHora;
 window.limpiarInicio    = limpiarInicio;
 window.promptAdmin  = promptAdmin;
 window.openTV       = openTV;
+window.copiarLinkSubasta = copiarLinkSubasta;
+window.copiarNombreCorreo = copiarNombreCorreo;
+window.canalTop23 = canalTop23;
+window.confirmarTop23 = confirmarTop23;
+window.cerrarModalTop23 = cerrarModalTop23;
+window.limpiarWaTop23 = limpiarWaTop23;
+window.generarHistoriaGanador = generarHistoriaGanador;
+window.copiarRegistroHistorial = copiarRegistroHistorial;
+window.copiarTodoHistorial = copiarTodoHistorial;
+window.borrarHistorial = borrarHistorial;
 </script>
 </body>
 </html>
