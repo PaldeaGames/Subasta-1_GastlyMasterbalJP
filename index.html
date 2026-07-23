@@ -2189,7 +2189,15 @@ const PERFILES_REF = "perfiles";         // cada usuario solo el suyo
 const ADMIN_UIDS = ["X0EOuQd5wjW39ShnuSqhY8DZWs62"];
 
 // Procesar resultado de login por redirect (Instagram/Facebook in-app)
-manejarRedirectResult();
+// Se ejecuta con delay para asegurar que Firebase esté completamente inicializado
+setTimeout(() => {
+  manejarRedirectResult().catch(err => {
+    // Silenciar errores comunes cuando no hay redirect pendiente
+    if(err && err.code && err.code !== "auth/no-auth-event"){
+      console.error("Redirect result:", err);
+    }
+  });
+}, 100);
 
 // ══════════════════════════════════════
 //  ESTADO CENTRAL
@@ -2551,7 +2559,7 @@ function initSwipeGaleria(){
 
   stage.addEventListener("touchend", () => { swActivo = false; }, {passive:true});
 }
-function galTo(i){ galIdx=i; renderGallery(); }
+async function galTo(i){ galIdx=i; renderGallery(); }
 
 // ══════════════════════════════════════
 //  LOGIN
@@ -4577,7 +4585,7 @@ function activarSubasta(inicioTs, durMs){
   toast("🟢 ¡Subasta iniciada!", "ok");
 }
 
-function adminReset(){
+async function adminReset(){
   const nPujas = (S.pujas||[]).length;
   const nVis   = (P.visitantes||[]).length;
   const nMkt   = (P.visitantes||[]).filter(v=>v.marketing && v.email).length;
