@@ -935,6 +935,43 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 }
 #screen-app.ultimo-minuto-app .timer-val{ animation:blink 1s infinite; }
 
+/* ── Urgencia en la caja unificada de oferta (live-bar) ── */
+@keyframes bar-pulso-rojo{
+  0%,100%{ box-shadow:0 0 0 1.5px rgba(255,59,92,.55), 0 0 24px rgba(255,59,92,.18); border-color:rgba(255,59,92,.6); }
+  50%    { box-shadow:0 0 0 2.5px rgba(255,59,92,.95), 0 0 40px rgba(255,59,92,.35); border-color:rgba(255,59,92,1); }
+}
+@keyframes bar-pulso-rojo-intenso{
+  0%,100%{ box-shadow:0 0 0 2px rgba(255,59,92,.85), 0 0 34px rgba(255,59,92,.35); border-color:rgba(255,59,92,.9); transform:scale(1); }
+  50%    { box-shadow:0 0 0 4px rgba(255,59,92,1), 0 0 60px rgba(255,59,92,.55); border-color:rgba(255,59,92,1); transform:scale(1.015); }
+}
+#screen-app.ultimo-minuto-app .live-bar{
+  border:1.5px solid rgba(255,59,92,.6);
+  animation:bar-pulso-rojo 1.1s ease-in-out infinite;
+}
+#screen-app.ultimo-minuto-app .live-bar .price-val,
+#screen-app.ultimo-minuto-app .live-bar .price-lbl,
+#screen-app.ultimo-minuto-app .live-bar .timer-lbl{ color:var(--red)!important; }
+
+#screen-app.urgente-30 .live-bar{
+  border:2px solid var(--red);
+  animation:bar-pulso-rojo-intenso .6s ease-in-out infinite;
+}
+#screen-app.urgente-30 .live-bar .price-val{
+  color:var(--red)!important;
+  animation:blink .55s infinite;
+}
+
+/* ── Botón pujar rojo pulsante en los últimos 30s ── */
+@keyframes btn-pulso-rojo{
+  0%,100%{ box-shadow:0 0 0 0 rgba(255,59,92,.85), 0 6px 22px rgba(255,59,92,.3); transform:scale(1); }
+  50%    { box-shadow:0 0 0 10px rgba(255,59,92,0), 0 6px 30px rgba(255,59,92,.55); transform:scale(1.04); }
+}
+#screen-app.urgente-30 #btn-bid:not(:disabled){
+  background:linear-gradient(135deg,#ff3b5c,#ff6a1a)!important;
+  color:#fff!important;
+  animation:btn-pulso-rojo .7s ease-in-out infinite;
+}
+
 /* Festejo del VENDIDO: confeti cayendo + destellos (sin fuego) */
 .vendido-stamp-wrap{ position:relative; display:inline-block; }
 @keyframes destello-pulso{
@@ -1660,7 +1697,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v24</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v25</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -2173,7 +2210,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v24 — 23 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v25 — 23 jul 2026","color:#f5c842;font-weight:bold");
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -4054,7 +4091,7 @@ function startTimer(){
     if(S.subasta.estado !== "activa"){
       clearInterval(timerInterval); timerInterval = null;
       const sa = document.getElementById("screen-app");
-      if(sa){ sa.classList.remove("ultimo-minuto-app","ultimos-10"); }
+      if(sa){ sa.classList.remove("ultimo-minuto-app","urgente-30","ultimos-10"); }
       if(isTVMode) renderTV(); else renderApp();   // el estado real toma el control
       return;
     }
@@ -4099,6 +4136,7 @@ function startTimer(){
       const screenApp = document.getElementById("screen-app");
       if(!isTVMode && screenApp){
         screenApp.classList.toggle("ultimo-minuto-app", enUltimoMinuto);
+        screenApp.classList.toggle("urgente-30", resto>0 && resto<=30000);
         screenApp.classList.toggle("ultimos-10", resto>0 && resto<=10000);
       }
     }
@@ -4772,38 +4810,38 @@ function sonidoPuja(){
   try{
     if(!tvAudioCtx) tvAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = tvAudioCtx;
-    if(ctx.state === "suspended") ctx.resume();
-    const now = ctx.currentTime;
+    const arrancar = () => {
+      const now = ctx.currentTime;
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate*0.08, ctx.sampleRate);
+      const d = buf.getChannelData(0);
+      for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/d.length, 2);
+      noise.buffer = buf;
+      const nf = ctx.createBiquadFilter(); nf.type="bandpass"; nf.frequency.value=1200; nf.Q.value=1;
+      const ng = ctx.createGain(); ng.gain.value=0.35;
+      noise.connect(nf); nf.connect(ng); ng.connect(ctx.destination);
+      noise.start(now); noise.stop(now+0.08);
 
-    // "Cha": golpe seco del cajón abriéndose (ruido corto filtrado)
-    const noise = ctx.createBufferSource();
-    const buf = ctx.createBuffer(1, ctx.sampleRate*0.08, ctx.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let i=0;i<d.length;i++) d[i] = (Math.random()*2-1) * Math.pow(1-i/d.length, 2);
-    noise.buffer = buf;
-    const nf = ctx.createBiquadFilter(); nf.type="bandpass"; nf.frequency.value=1200; nf.Q.value=1;
-    const ng = ctx.createGain(); ng.gain.value=0.35;
-    noise.connect(nf); nf.connect(ng); ng.connect(ctx.destination);
-    noise.start(now); noise.stop(now+0.08);
-
-    // "CHING": dos campanas metálicas (dos frecuencias que suenan a timbre real)
-    const campana = (t, freq, vol) => {
-      [freq, freq*2.76, freq*5.4].forEach((f, idx) => {   // parciales inarmónicos = timbre metálico
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = f;
-        const v = vol * (idx===0 ? 1 : idx===1 ? 0.5 : 0.25);
-        gain.gain.setValueAtTime(0.0001, now+t);
-        gain.gain.exponentialRampToValueAtTime(v, now+t+0.005);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now+t+0.55);
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.start(now+t); osc.stop(now+t+0.58);
-      });
+      const campana = (t, freq, vol) => {
+        [freq, freq*2.76, freq*5.4].forEach((f, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = "sine";
+          osc.frequency.value = f;
+          const v = vol * (idx===0 ? 1 : idx===1 ? 0.5 : 0.25);
+          gain.gain.setValueAtTime(0.0001, now+t);
+          gain.gain.exponentialRampToValueAtTime(v, now+t+0.005);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now+t+0.55);
+          osc.connect(gain); gain.connect(ctx.destination);
+          osc.start(now+t); osc.stop(now+t+0.58);
+        });
+      };
+      campana(0.05, 1046, 0.30);
+      campana(0.12, 1568, 0.26);
     };
-    campana(0.05, 1046, 0.30);   // Do agudo
-    campana(0.12, 1568, 0.26);   // Sol más agudo — el "ching" brillante
-  }catch(e){ /* si el navegador bloquea el audio, seguimos sin sonido */ }
+    if(ctx.state === "suspended") ctx.resume().then(arrancar).catch(()=>{});
+    else arrancar();
+  }catch(e){}
 }
 
 // Música de tensión para los últimos 10 segundos: pulso grave que se repite,
@@ -4813,35 +4851,36 @@ function sonidoTension(){
   try{
     if(!tvAudioCtx) tvAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = tvAudioCtx;
-    if(ctx.state === "suspended") ctx.resume();
-    const now = ctx.currentTime;
-    // Latido de corazón: un golpe grave + un armónico medio que SÍ suena fuerte
-    // en parlantes de celular (los graves puros casi no se oyen ahí).
-    const latido = (t, freqBaja) => {
-      // Capa grave (el "cuerpo" del latido)
-      const osc1 = ctx.createOscillator();
-      const g1 = ctx.createGain();
-      osc1.type = "sine";
-      osc1.frequency.value = freqBaja;
-      g1.gain.setValueAtTime(0.0001, now+t);
-      g1.gain.exponentialRampToValueAtTime(0.7, now+t+0.03);
-      g1.gain.exponentialRampToValueAtTime(0.0001, now+t+0.34);
-      osc1.connect(g1); g1.connect(ctx.destination);
-      osc1.start(now+t); osc1.stop(now+t+0.36);
-      // Capa media (audible en celular): el "tump" percusivo
-      const osc2 = ctx.createOscillator();
-      const g2 = ctx.createGain();
-      osc2.type = "triangle";
-      osc2.frequency.setValueAtTime(freqBaja*3.2, now+t);
-      osc2.frequency.exponentialRampToValueAtTime(freqBaja*1.6, now+t+0.12);
-      g2.gain.setValueAtTime(0.0001, now+t);
-      g2.gain.exponentialRampToValueAtTime(0.55, now+t+0.02);
-      g2.gain.exponentialRampToValueAtTime(0.0001, now+t+0.22);
-      osc2.connect(g2); g2.connect(ctx.destination);
-      osc2.start(now+t); osc2.stop(now+t+0.24);
+    const arrancar = () => {
+      const now = ctx.currentTime;
+      // Latido de corazón: un golpe grave + un armónico medio que SÍ suena fuerte
+      // en parlantes de celular (los graves puros casi no se oyen ahí).
+      const latido = (t, freqBaja) => {
+        const osc1 = ctx.createOscillator();
+        const g1 = ctx.createGain();
+        osc1.type = "sine";
+        osc1.frequency.value = freqBaja;
+        g1.gain.setValueAtTime(0.0001, now+t);
+        g1.gain.exponentialRampToValueAtTime(0.7, now+t+0.03);
+        g1.gain.exponentialRampToValueAtTime(0.0001, now+t+0.34);
+        osc1.connect(g1); g1.connect(ctx.destination);
+        osc1.start(now+t); osc1.stop(now+t+0.36);
+        const osc2 = ctx.createOscillator();
+        const g2 = ctx.createGain();
+        osc2.type = "triangle";
+        osc2.frequency.setValueAtTime(freqBaja*3.2, now+t);
+        osc2.frequency.exponentialRampToValueAtTime(freqBaja*1.6, now+t+0.12);
+        g2.gain.setValueAtTime(0.0001, now+t);
+        g2.gain.exponentialRampToValueAtTime(0.55, now+t+0.02);
+        g2.gain.exponentialRampToValueAtTime(0.0001, now+t+0.22);
+        osc2.connect(g2); g2.connect(ctx.destination);
+        osc2.start(now+t); osc2.stop(now+t+0.24);
+      };
+      latido(0, 80);
+      latido(0.4, 70);
     };
-    latido(0, 80);
-    latido(0.4, 70);
+    if(ctx.state === "suspended") ctx.resume().then(arrancar).catch(()=>{});
+    else arrancar();
   }catch(e){}
 }
 
@@ -4850,26 +4889,28 @@ function sonidoVictoria(){
   try{
     if(!tvAudioCtx) tvAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const ctx = tvAudioCtx;
-    if(ctx.state === "suspended") ctx.resume();
-    const now = ctx.currentTime;
-    const nota = (t, freq, dur, vol) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "triangle";
-      osc.frequency.value = freq;
-      gain.gain.setValueAtTime(0.0001, now+t);
-      gain.gain.exponentialRampToValueAtTime(vol, now+t+0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now+t+dur);
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.start(now+t); osc.stop(now+t+dur+0.02);
+    const arrancar = () => {
+      const now = ctx.currentTime;
+      const nota = (t, freq, dur, vol) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, now+t);
+        gain.gain.exponentialRampToValueAtTime(vol, now+t+0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now+t+dur);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now+t); osc.stop(now+t+dur+0.02);
+      };
+      nota(0,    523, 0.15, 0.3);
+      nota(0.13, 659, 0.15, 0.3);
+      nota(0.26, 784, 0.15, 0.3);
+      nota(0.42, 1046, 0.5, 0.36);
+      nota(0.42, 784, 0.5, 0.2);
+      nota(0.42, 1318, 0.5, 0.18);
     };
-    // Do - Mi - Sol - Do agudo (arpegio de victoria), con acorde final
-    nota(0,    523, 0.15, 0.3);
-    nota(0.13, 659, 0.15, 0.3);
-    nota(0.26, 784, 0.15, 0.3);
-    nota(0.42, 1046, 0.5, 0.36);
-    nota(0.42, 784, 0.5, 0.2);
-    nota(0.42, 1318, 0.5, 0.18);
+    if(ctx.state === "suspended") ctx.resume().then(arrancar).catch(()=>{});
+    else arrancar();
   }catch(e){}
 }
 
@@ -5876,6 +5917,7 @@ function renderLoginLivePanel(){
         timerEl.style.animation = "blink 1s infinite";
         panel.style.borderColor = "var(--red)";
         panel.style.background = "linear-gradient(135deg,rgba(255,59,92,.14),rgba(255,59,92,.02))";
+        panel.style.animation = "bar-pulso-rojo 1.1s ease-in-out infinite";
         if(tlblEl){ tlblEl.textContent = "¡ARRANCA YA!"; tlblEl.style.color = "var(--red)"; }
         if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "🔥 ¡Prepárate, empieza AHORA!"; urgEl.style.color = "var(--red)"; }
       } else if(pocosMinProg){
@@ -5883,6 +5925,7 @@ function renderLoginLivePanel(){
         timerEl.style.animation = "";
         panel.style.borderColor = "var(--gold)";
         panel.style.background = "linear-gradient(135deg,rgba(245,200,66,.14),rgba(245,200,66,.02))";
+        panel.style.animation = "";
         if(tlblEl){ tlblEl.textContent = "Empieza en"; tlblEl.style.color = "var(--red)"; }
         if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "⏰ ¡Prepárate, quedan minutos!"; urgEl.style.color = "var(--red)"; }
       } else {
@@ -5890,6 +5933,7 @@ function renderLoginLivePanel(){
         timerEl.style.animation = "";
         panel.style.borderColor = "var(--gold)";
         panel.style.background = "linear-gradient(135deg,rgba(245,200,66,.12),rgba(245,200,66,.02))";
+        panel.style.animation = "";
         if(tlblEl){ tlblEl.textContent = "Empieza en"; tlblEl.style.color = "var(--muted2)"; }
         if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "⏳ ¡Prepárate para pujar!"; urgEl.style.color = "var(--gold)"; }
       }
@@ -5935,16 +5979,25 @@ function renderLoginLivePanel(){
     if(ultimoMin){
       timerEl.style.color = "var(--red)";
       timerEl.style.animation = "blink 1s infinite";
+      panel.style.borderColor = "var(--red)";
+      panel.style.background = "linear-gradient(135deg,rgba(255,59,92,.14),rgba(255,59,92,.02))";
+      panel.style.animation = "bar-pulso-rojo 1.1s ease-in-out infinite";
       if(tlblEl){ tlblEl.textContent = "¡TERMINA YA!"; tlblEl.style.color = "var(--red)"; }
-      if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "🔥 ¡Último minuto!"; }
+      if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "🔥 ¡Último minuto!"; urgEl.style.color = "var(--red)"; }
     } else if(pocos){
       timerEl.style.color = "var(--gold)";
       timerEl.style.animation = "";
+      panel.style.borderColor = "var(--green)";
+      panel.style.background = "linear-gradient(135deg,rgba(0,230,122,.12),rgba(0,230,122,.02))";
+      panel.style.animation = "";
       if(tlblEl){ tlblEl.textContent = "Termina en"; tlblEl.style.color = "var(--muted2)"; }
       if(urgEl){ urgEl.style.display = "block"; urgEl.textContent = "⏰ ¡Quedan pocos minutos!"; urgEl.style.color = "var(--gold)"; }
     } else {
       timerEl.style.color = "var(--green)";
       timerEl.style.animation = "";
+      panel.style.borderColor = "var(--green)";
+      panel.style.background = "linear-gradient(135deg,rgba(0,230,122,.12),rgba(0,230,122,.02))";
+      panel.style.animation = "";
       if(tlblEl){ tlblEl.textContent = "Termina en"; tlblEl.style.color = "var(--muted2)"; }
       if(urgEl) urgEl.style.display = "none";
     }
