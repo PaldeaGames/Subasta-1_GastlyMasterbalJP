@@ -1071,6 +1071,63 @@ body::before{content:'';position:fixed;inset:0;background-image:url("data:image/
 #express-splash .ex-sub{ font-family:'Bebas Neue',sans-serif; font-size:clamp(20px,5vw,38px); color:#ffb020; letter-spacing:3px; }
 #express-splash .ex-lightning{ font-size:clamp(40px,10vw,80px); animation:blink 1s infinite; }
 
+/* Countdown 3-2-1 al arranque de subasta programada */
+#countdown-splash{
+  display:none; position:fixed; inset:0; z-index:10000;
+  background:radial-gradient(ellipse at center, rgba(0,60,20,.75), rgba(7,7,13,.94));
+  flex-direction:column; align-items:center; justify-content:center; gap:20px; text-align:center;
+  pointer-events:none;
+}
+#countdown-splash.show{ display:flex; }
+#countdown-splash .cd-glow{
+  position:absolute; width:60vmin; height:60vmin; border-radius:50%;
+  background:radial-gradient(circle, rgba(0,230,122,.35), transparent 65%);
+  filter:blur(20px); animation:cd-glow-pulse .9s ease-out;
+}
+#countdown-splash .cd-numero{
+  font-family:'Bebas Neue', Impact, sans-serif;
+  font-size:clamp(180px, 45vmin, 420px);
+  line-height:.85;
+  color:#fff;
+  text-shadow:0 0 40px rgba(0,230,122,.9), 0 0 80px rgba(0,230,122,.5);
+  animation:cd-numero-in .9s cubic-bezier(.2,1.3,.4,1);
+}
+#countdown-splash.go .cd-numero{
+  color:#f5c842;
+  text-shadow:0 0 50px rgba(245,200,66,1), 0 0 100px rgba(245,200,66,.7);
+  animation:cd-go-in 1s cubic-bezier(.2,1.3,.4,1);
+}
+#countdown-splash.go .cd-glow{
+  background:radial-gradient(circle, rgba(245,200,66,.5), transparent 65%);
+  animation:cd-glow-pulse 1s ease-out;
+}
+#countdown-splash .cd-sub{
+  font-family:'Bebas Neue',sans-serif;
+  font-size:clamp(22px, 5vw, 44px);
+  letter-spacing:6px; color:#00e67a;
+  text-shadow:0 0 20px rgba(0,230,122,.6);
+}
+#countdown-splash.go .cd-sub{
+  color:#f5c842;
+  text-shadow:0 0 20px rgba(245,200,66,.8);
+}
+@keyframes cd-numero-in{
+  0%   { transform:scale(2.4); opacity:0; }
+  40%  { transform:scale(1); opacity:1; }
+  100% { transform:scale(1.15); opacity:0; }
+}
+@keyframes cd-go-in{
+  0%   { transform:scale(.3) rotate(-8deg); opacity:0; }
+  30%  { transform:scale(1.2) rotate(2deg); opacity:1; }
+  60%  { transform:scale(1) rotate(0deg); opacity:1; }
+  100% { transform:scale(1.3); opacity:0; }
+}
+@keyframes cd-glow-pulse{
+  0%   { transform:scale(.5); opacity:.3; }
+  50%  { transform:scale(1.2); opacity:1; }
+  100% { transform:scale(1.8); opacity:0; }
+}
+
 /* Etiqueta EXPRESS junto al logo / título */
 .express-badge{
   display:inline-flex; align-items:center; gap:4px;
@@ -1697,7 +1754,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v25</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v26</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -2190,6 +2247,13 @@ body.express-tema #login-live-panel{
   <div class="ex-sub">¡SUBASTA RÁPIDA!</div>
 </div>
 
+<!-- Countdown 3-2-1 al arranque de una subasta programada -->
+<div id="countdown-splash">
+  <div class="cd-glow"></div>
+  <div class="cd-numero" id="cd-numero">3</div>
+  <div class="cd-sub">EMPIEZA EN...</div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -2210,7 +2274,12 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v25 — 23 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v26 — 23 jul 2026","color:#f5c842;font-weight:bold");
+
+// Tick global del countdown 3-2-1: revisa cada 250ms si hay que disparar.
+// No compite con los otros ticks porque solo mira estado + resto, y una vez
+// disparado, se auto-desactiva hasta que termine el countdown.
+setInterval(chequearCountdownInicio, 250);
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
@@ -2236,6 +2305,7 @@ let tvFuegoEncendido = false;
 let tensionUltimoSeg = -1;
 let victoriaSonada = false;
 let appUltimaPujaId = null;
+let appPrimeraCargaHecha = false;
 let victoriaAppSonada = false;
 let loginLiveInt = null;
 let scheduleTimeout = null;
@@ -2630,6 +2700,14 @@ function esNavegadorInApp(){
   return /instagram|fbav|fb_iab|fban|messenger|line\/|musical_ly|tiktok|; wv\)/.test(ua);
 }
 
+// En móvil el popup de Google abre chico y desalineado (heurística del navegador).
+// Con redirect toma toda la pantalla, es el flujo recomendado por Google en móvil.
+function esMovil(){
+  const ua = (navigator.userAgent || navigator.vendor || "").toLowerCase();
+  return /android|iphone|ipad|ipod|blackberry|iemobile|opera mini|mobile/.test(ua)
+      || (navigator.maxTouchPoints > 1 && /mac/.test(ua)); // iPad reciente
+}
+
 function mostrarAvisoRedirect(){
   const b = document.getElementById("login-redirect-aviso");
   if(b){ b.style.display="block"; b.textContent = "Redirigiendo a Google… vuelve en un momento."; }
@@ -2650,8 +2728,10 @@ function copiarLinkSubasta(){
 }
 
 async function loginGoogle(){
-  // Navegador in-app (Instagram/FB): popup bloqueado por Google → redirect
-  if(esNavegadorInApp()){
+  // Móvil (o navegador in-app): popup abre chico/desalineado en móvil o
+  // Google lo bloquea en Instagram/FB. En ambos casos, redirect ocupa toda
+  // la pantalla y es el flujo estándar recomendado por Google.
+  if(esNavegadorInApp() || esMovil()){
     try{
       mostrarAvisoRedirect();
       await signInWithRedirect(auth, googleProvider);
@@ -2662,7 +2742,7 @@ async function loginGoogle(){
       return;
     }
   }
-  // Navegador normal: popup
+  // Escritorio: popup
   try{
     const result = await signInWithPopup(auth, googleProvider);
     const u = result.user;
@@ -2804,11 +2884,16 @@ function renderApp(){
   // previo para permitir audio; como el pujador toca para pujar, se activa solo.
   if(!isTVMode){
     const liderApp = S.pujas[0] || null;
-    if(appUltimaPujaId !== null && liderApp && liderApp.id &&
-       liderApp.id !== appUltimaPujaId && sub.estado === "activa"){
+    const idActual = liderApp && liderApp.id ? liderApp.id : (liderApp ? "sin-id" : null);
+    // Suena si: (a) hay puja nueva distinta a la anterior conocida, o
+    // (b) es la PRIMERA puja de una subasta que arrancó sin pujas (antes no sonaba
+    //     porque appUltimaPujaId estaba en null y la condición lo bloqueaba).
+    if(appPrimeraCargaHecha && sub.estado === "activa" && idActual &&
+       idActual !== appUltimaPujaId){
       sonidoPuja();
     }
-    appUltimaPujaId = liderApp && liderApp.id ? liderApp.id : (liderApp ? "sin-id" : null);
+    appUltimaPujaId = idActual;
+    appPrimeraCargaHecha = true;
     if(sub.estado === "finalizada" && S.lider && user &&
        (S.lider.uid ? S.lider.uid === user.uid : S.lider.ig === user.ig) &&
        !victoriaAppSonada){
@@ -5116,6 +5201,63 @@ function renderLogTV(flashId){
 // Existían dos campos (inicioTs / inicioProgTs) y según el flujo uno quedaba null.
 function inicioSubasta(){
   return S.subasta.inicioProgTs || S.subasta.inicioTs || null;
+}
+
+// ── Countdown 3-2-1 al arranque de una subasta programada ──
+// Se dispara cuando faltan ≤3s para el inicio. Muestra un overlay a
+// pantalla completa con "3, 2, 1, ¡YA!". No emite sonido para no invadir.
+// Marca en sessionStorage para no repetir si el usuario recarga.
+let countdownArmado = null;
+let countdownCorriendo = false;
+
+function chequearCountdownInicio(){
+  if(countdownCorriendo) return;
+  if(S.subasta.estado !== "programada") return;
+  const ini = inicioSubasta();
+  if(!ini) return;
+  const resto = ini - Date.now();
+  if(resto <= 0 || resto > 3500) return;
+
+  // Evitar disparar el mismo countdown dos veces (por recargas o dos pantallas)
+  const clave = `paldea_cd_${ini}`;
+  try{ if(sessionStorage.getItem(clave)) return; }catch(e){}
+  try{ sessionStorage.setItem(clave, "1"); }catch(e){}
+
+  countdownCorriendo = true;
+  dispararCountdown(ini);
+}
+
+function dispararCountdown(iniTs){
+  const el = document.getElementById("countdown-splash");
+  const num = document.getElementById("cd-numero");
+  if(!el || !num) return;
+
+  const paso = () => {
+    const resto = iniTs - Date.now();
+    if(resto <= 0){
+      // ¡YA!
+      el.classList.add("go");
+      num.textContent = "¡YA!";
+      const sub = el.querySelector(".cd-sub");
+      if(sub) sub.textContent = "¡A PUJAR!";
+      setTimeout(()=>{
+        el.classList.remove("show","go");
+        countdownCorriendo = false;
+      }, 1000);
+      return;
+    }
+    const seg = Math.ceil(resto/1000);
+    num.textContent = seg;
+    // Re-disparar la animación reinsertando el nodo
+    num.style.animation = "none";
+    void num.offsetWidth;
+    num.style.animation = "";
+    setTimeout(paso, resto - (seg-1)*1000);
+  };
+
+  el.classList.remove("go");
+  el.classList.add("show");
+  paso();
 }
 
 function fechaLegible(ts){
