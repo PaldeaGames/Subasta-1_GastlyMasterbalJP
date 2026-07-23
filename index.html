@@ -1754,7 +1754,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v27</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v28</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -2256,6 +2256,19 @@ body.express-tema #login-live-panel{
 
 <div class="toast" id="toast"></div>
 
+<!-- Panel de debug: aparece solo con #debug en la URL. Muestra cada paso
+     del login en vivo para diagnosticar en el celular sin DevTools. -->
+<div id="debug-panel" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(0,0,0,.92);color:#0f0;font-family:'JetBrains Mono',monospace;font-size:11px;padding:8px;max-height:60vh;overflow-y:auto;border-bottom:2px solid #0f0;line-height:1.4">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid #0f0">
+    <strong>🐛 DEBUG</strong>
+    <div>
+      <button onclick="copiarDebug()" style="background:#0f0;color:#000;border:none;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;margin-right:4px">📋 Copiar</button>
+      <button onclick="document.getElementById('debug-panel').style.display='none'" style="background:#f00;color:#fff;border:none;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700">✕</button>
+    </div>
+  </div>
+  <div id="debug-log"></div>
+</div>
+
 <script type="module">
 // ══════════════════════════════════════
 //  FIREBASE CONFIG
@@ -2266,7 +2279,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 
 const firebaseConfig = {
   apiKey: "AIzaSyDYHCQ0n74xoCW-JzYQ-OPYF_efcPni3OE",
-  authDomain: "paldea-games-subastas.firebaseapp.com",
+  authDomain: "paldeagames.github.io",
   databaseURL: "https://paldea-games-subastas-default-rtdb.firebaseio.com",
   projectId: "paldea-games-subastas",
   storageBucket: "paldea-games-subastas.firebasestorage.app",
@@ -2274,7 +2287,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v27 — 23 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v28 — 23 jul 2026","color:#f5c842;font-weight:bold");
 
 // Tick global del countdown 3-2-1: revisa cada 250ms si hay que disparar.
 // No compite con los otros ticks porque solo mira estado + resto, y una vez
@@ -2283,22 +2296,65 @@ setInterval(chequearCountdownInicio, 250);
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getDatabase(firebaseApp);
 const auth = getAuth(firebaseApp);
+
+// ── Debug visible en pantalla ──
+// Se activa con #debug en la URL. Muestra cada paso del login para poder
+// diagnosticar en móvil sin DevTools. Los mensajes van a un panel arriba.
+const DEBUG_ON = location.hash.includes("debug");
+if(DEBUG_ON){
+  const p = document.getElementById("debug-panel");
+  if(p) p.style.display = "block";
+}
+function debug(...args){
+  if(!DEBUG_ON) return;
+  const t = new Date().toLocaleTimeString();
+  const msg = args.map(a => {
+    if(a === null) return "null";
+    if(a === undefined) return "undef";
+    if(typeof a === "object"){ try{ return JSON.stringify(a); }catch(e){ return String(a); } }
+    return String(a);
+  }).join(" ");
+  const line = `[${t}] ${msg}`;
+  console.log("[DEBUG]", ...args);
+  const box = document.getElementById("debug-log");
+  if(box){
+    const div = document.createElement("div");
+    div.textContent = line;
+    box.appendChild(div);
+    box.parentElement.scrollTop = box.parentElement.scrollHeight;
+  }
+}
+function copiarDebug(){
+  const box = document.getElementById("debug-log");
+  if(!box) return;
+  const txt = box.innerText;
+  navigator.clipboard.writeText(txt)
+    .then(()=> alert("Copiado. Pégalo en el chat."))
+    .catch(()=> prompt("Copia esto:", txt));
+}
+window.copiarDebug = copiarDebug;
+
+debug("arranque | UA:", navigator.userAgent);
+debug("URL:", location.href);
 const googleProvider = new GoogleAuthProvider();
 // Fuerza el selector de cuenta cada vez (evita entrar con una cuenta pegada)
 googleProvider.setCustomParameters({ prompt: "select_account" });
 
 // CRÍTICO para signInWithRedirect en móvil: fijar persistencia explícita.
 // Firebase 10+ a veces pierde la sesión entre la ida a Google y la vuelta
-// (Safari con ITP, Chrome iOS, WebViews). Intentamos IndexedDB primero
-// (sobrevive mejor a la protección de rastreo), luego localStorage,
-// y como último recurso memoria (no persiste pero al menos permite entrar).
-(async () => {
-  try{
-    await setPersistence(auth, indexedDBLocalPersistence);
-  }catch(e){
-    try{ await setPersistence(auth, browserLocalPersistence); }
+// (Safari con ITP, Chrome iOS, WebViews, y también Chrome Android tras
+// actualizaciones recientes). Intentamos IndexedDB primero (sobrevive
+// mejor a la protección de rastreo), luego localStorage.
+// Se expone como promesa para que loginGoogle pueda ESPERARLA antes de
+// disparar el redirect. Si el redirect se dispara mientras la persistencia
+// aún no está fijada, Firebase usa el modo por defecto y pierde la sesión.
+const persistenciaLista = (async () => {
+  try{ await setPersistence(auth, indexedDBLocalPersistence); return "indexedDB"; }
+  catch(e){
+    try{ await setPersistence(auth, browserLocalPersistence); return "localStorage"; }
     catch(e2){
-      try{ await setPersistence(auth, inMemoryPersistence); }catch(e3){}
+      try{ await setPersistence(auth, inMemoryPersistence); return "memory"; }
+      catch(e3){ return "default"; }
     }
   }
 })();
@@ -2745,6 +2801,10 @@ function copiarLinkSubasta(){
 }
 
 async function loginGoogle(){
+  // Esperar a que la persistencia quede fijada. Si el redirect se dispara
+  // antes, Firebase usa el modo por defecto y pierde la sesión al volver.
+  try{ await persistenciaLista; }catch(e){}
+
   // Móvil (o navegador in-app): popup abre chico/desalineado en móvil o
   // Google lo bloquea en Instagram/FB. En ambos casos, redirect ocupa toda
   // la pantalla y es el flujo estándar recomendado por Google.
@@ -5417,36 +5477,19 @@ initFirebaseListener();
 renderLoginInfo();
 
 // ── Restaurar sesión tras signInWithRedirect (móvil) ──
-// En móvil, la sesión a veces no llega a onAuthStateChanged por sí sola
-// (Firebase 10+ tuvo un regresión con Safari/Chrome iOS/WebViews). Aquí
-// procesamos activamente el resultado del redirect y forzamos el arranque
-// del flujo si Firebase ya nos devolvió un usuario válido.
-getRedirectResult(auth)
-  .then(result => {
-    if(result && result.user){
-      // Hay usuario nuevo tras el redirect. onAuthStateChanged debería
-      // dispararse solo, pero por si no lo hace (bug en móvil), forzamos
-      // llamar al mismo manejador con los datos.
-      // No poblamos googleUser aquí: onAuthStateChanged lo hará de forma
-      // consistente. Si tarda >2s en dispararse, algo salió mal y avisamos.
-      setTimeout(() => {
-        if(!user && !googleUser){
-          console.warn("getRedirectResult trajo usuario pero onAuthStateChanged no disparó. Forzando reload.");
-          // Último recurso: recargar la página para que Firebase reintente
-          // levantar la sesión desde persistencia.
-          location.reload();
-        }
-      }, 2000);
-    }
-  })
-  .catch(err => {
-    if(err && err.code === "auth/unauthorized-domain"){
-      toast("Este sitio no está autorizado. Avisa a @paldea.games","err");
-    } else if(err){
-      console.error("getRedirectResult error:", err);
-      mostrarAvisoAbrirFuera();
-    }
-  });
+// getRedirectResult devuelve el usuario UNA sola vez tras el redirect.
+// Firebase también dispara onAuthStateChanged con ese mismo usuario, así
+// que aquí solo capturamos errores. NO recargamos: recargar crea un loop
+// porque en la segunda llamada getRedirectResult devuelve null y ahí
+// quedaría atrapado el usuario.
+getRedirectResult(auth).catch(err => {
+  if(err && err.code === "auth/unauthorized-domain"){
+    toast("Este sitio no está autorizado. Avisa a @paldea.games","err");
+  } else if(err){
+    console.error("getRedirectResult error:", err.code || err);
+    mostrarAvisoAbrirFuera();
+  }
+});
 
 onAuthStateChanged(auth, (fbUser) => {
   const urlP = new URLSearchParams(location.search);
