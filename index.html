@@ -5594,6 +5594,18 @@ function exportarCorreos(){
   });
 }
 
+
+function copiarNombreCorreo(){
+  const lista = P.visitantes || [];
+  if(lista.length === 0){ toast("No hay participantes aún","warn"); return; }
+  const lineas = lista.map(v => `${v.nombre || ""} | ${v.email || "—"}`);
+  const texto = lineas.join("\n");
+  navigator.clipboard.writeText(texto).then(()=>{
+    toast(`📋 ${lista.length} participante${lista.length!==1?"s":""} copiado${lista.length!==1?"s":""}`,"ok");
+  }).catch(()=>{
+    prompt("Copia nombre+correo:", texto);
+  });
+}
 // Muestra cuándo empieza o cuándo termina la subasta en el login
 function renderLoginCuando(){
   const box = document.getElementById("login-cuando");
