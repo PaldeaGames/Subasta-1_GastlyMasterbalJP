@@ -1754,7 +1754,7 @@ body.express-tema #login-live-panel{
     <!-- ADMIN -->
     <div id="admin-panel">
       <div class="admin-hdr">
-        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v26</span></span>
+        <span>⚙️ Panel de Administrador <span style="color:var(--muted);font-weight:400;letter-spacing:0">· v27</span></span>
         <button class="a-btn-sm" onclick="toggleAdmin()">✕ Cerrar</button>
       </div>
 
@@ -2262,7 +2262,7 @@ body.express-tema #login-live-panel{
 // ══════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, push, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, indexedDBLocalPersistence, inMemoryPersistence } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDYHCQ0n74xoCW-JzYQ-OPYF_efcPni3OE",
@@ -2274,7 +2274,7 @@ const firebaseConfig = {
   appId: "1:1091049649403:web:487a0b64c3977c85936c5e"
 };
 
-console.log("%cPaldea Subastas v26 — 23 jul 2026","color:#f5c842;font-weight:bold");
+console.log("%cPaldea Subastas v27 — 23 jul 2026","color:#f5c842;font-weight:bold");
 
 // Tick global del countdown 3-2-1: revisa cada 250ms si hay que disparar.
 // No compite con los otros ticks porque solo mira estado + resto, y una vez
@@ -2286,6 +2286,23 @@ const auth = getAuth(firebaseApp);
 const googleProvider = new GoogleAuthProvider();
 // Fuerza el selector de cuenta cada vez (evita entrar con una cuenta pegada)
 googleProvider.setCustomParameters({ prompt: "select_account" });
+
+// CRÍTICO para signInWithRedirect en móvil: fijar persistencia explícita.
+// Firebase 10+ a veces pierde la sesión entre la ida a Google y la vuelta
+// (Safari con ITP, Chrome iOS, WebViews). Intentamos IndexedDB primero
+// (sobrevive mejor a la protección de rastreo), luego localStorage,
+// y como último recurso memoria (no persiste pero al menos permite entrar).
+(async () => {
+  try{
+    await setPersistence(auth, indexedDBLocalPersistence);
+  }catch(e){
+    try{ await setPersistence(auth, browserLocalPersistence); }
+    catch(e2){
+      try{ await setPersistence(auth, inMemoryPersistence); }catch(e3){}
+    }
+  }
+})();
+
 const SUBASTA_REF  = "subasta_activa";   // público: carta, pujas, precios
 const PRIVADO_REF  = "privado";          // solo admin: correos y contacto del ganador
 const PERFILES_REF = "perfiles";         // cada usuario solo el suyo
@@ -5399,17 +5416,37 @@ load();
 initFirebaseListener();
 renderLoginInfo();
 
-// ── Restaurar sesión con Firebase Auth (persiste aunque apague el equipo) ──
-// Al volver del redirect (navegadores in-app), capturar errores.
-// El ingreso normal lo maneja onAuthStateChanged; esto solo reporta fallas.
-getRedirectResult(auth).catch(err => {
-  if(err && err.code === "auth/unauthorized-domain"){
-    toast("Este sitio no está autorizado. Avisa a @paldea.games","err");
-  } else if(err){
-    console.error("getRedirectResult error:", err);
-    mostrarAvisoAbrirFuera();
-  }
-});
+// ── Restaurar sesión tras signInWithRedirect (móvil) ──
+// En móvil, la sesión a veces no llega a onAuthStateChanged por sí sola
+// (Firebase 10+ tuvo un regresión con Safari/Chrome iOS/WebViews). Aquí
+// procesamos activamente el resultado del redirect y forzamos el arranque
+// del flujo si Firebase ya nos devolvió un usuario válido.
+getRedirectResult(auth)
+  .then(result => {
+    if(result && result.user){
+      // Hay usuario nuevo tras el redirect. onAuthStateChanged debería
+      // dispararse solo, pero por si no lo hace (bug en móvil), forzamos
+      // llamar al mismo manejador con los datos.
+      // No poblamos googleUser aquí: onAuthStateChanged lo hará de forma
+      // consistente. Si tarda >2s en dispararse, algo salió mal y avisamos.
+      setTimeout(() => {
+        if(!user && !googleUser){
+          console.warn("getRedirectResult trajo usuario pero onAuthStateChanged no disparó. Forzando reload.");
+          // Último recurso: recargar la página para que Firebase reintente
+          // levantar la sesión desde persistencia.
+          location.reload();
+        }
+      }, 2000);
+    }
+  })
+  .catch(err => {
+    if(err && err.code === "auth/unauthorized-domain"){
+      toast("Este sitio no está autorizado. Avisa a @paldea.games","err");
+    } else if(err){
+      console.error("getRedirectResult error:", err);
+      mostrarAvisoAbrirFuera();
+    }
+  });
 
 onAuthStateChanged(auth, (fbUser) => {
   const urlP = new URLSearchParams(location.search);
