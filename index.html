@@ -2206,6 +2206,21 @@ const STORAGE_KEY = "diegotcg_subasta_v2";
 
 let user  = null;
 let admin = false;
+
+// Desbloquear audio en móviles (requiere interacción del usuario)
+let audioUnlocked = false;
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  // Crear y reproducir un sonido silencioso para desbloquear el contexto
+  const silent = new Audio("data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAAABmYWN0BAAAAAAAAABkYXRhAAAAAA==");
+  silent.play().catch(()=>{});
+  document.removeEventListener("touchstart", unlockAudio);
+  document.removeEventListener("click", unlockAudio);
+}
+document.addEventListener("touchstart", unlockAudio, {once:true});
+document.addEventListener("click", unlockAudio, {once:true});
+
 let timerInterval = null;
 let tvFuegoEncendido = false;
 let tensionUltimoSeg = -1;
@@ -2561,6 +2576,21 @@ function initSwipeGaleria(){
 }
 async function galTo(i){ galIdx=i; renderGallery(); }
 
+
+
+// Carrusel automático de imágenes
+galAutoInt = null;
+function startGalAuto(){
+  stopGalAuto();
+  if(!S.carta.imgs || S.carta.imgs.length < 2) return;
+  galAutoInt = setInterval(() => {
+    galNav(1);
+  }, 3000);
+}
+function stopGalAuto(){
+  if(galAutoInt){ clearInterval(galAutoInt); galAutoInt = null; }
+}
+// Iniciar/detener según estado de subasta
 // ══════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════
@@ -3064,6 +3094,12 @@ function renderApp(){
     const agb = document.getElementById("admin-ganador-box");
     if(agb) agb.style.display = "none";
   }
+  // Carrusel automático
+  if(S.subasta.estado === "activa" && S.carta.imgs && S.carta.imgs.length > 1){
+    startGalAuto();
+  } else {
+    stopGalAuto();
+  }
 }
 
 // ── Panel de contacto del ganador (solo admin) ──
@@ -3320,7 +3356,31 @@ function confirmarTop23(){
     })
     .catch(err => {
       console.error("Error al guardar contacto top23:", err);
-      toast("No se pudo guardar. Reintenta.","err");
+      // Si falló con Instagram, ofrecer cambiar a WhatsApp automáticamente
+      if(canalTop23Elegido === "ig" && !waFinal){
+        toast("Instagram falló. Intenta con WhatsApp 💬","warn");
+        // Cambiar automáticamente a WhatsApp
+        canalTop23("wa");
+        // Mostrar mensaje en el modal
+        const sub = document.getElementById("top23-sub");
+        if(sub) sub.innerHTML = "⚠️ Instagram no funcionó.<br>Por favor ingresa tu WhatsApp 👇";
+        // Enfocar el campo de WhatsApp
+        setTimeout(() => {
+          const waEl = document.getElementById("top23-wa");
+          if(waEl) waEl.focus();
+        }, 300);
+      } else if(canalTop23Elegido === "wa" && !igFinal){
+        toast("WhatsApp falló. Intenta con Instagram 📷","warn");
+        canalTop23("ig");
+        const sub = document.getElementById("top23-sub");
+        if(sub) sub.innerHTML = "⚠️ WhatsApp no funcionó.<br>Por favor ingresa tu Instagram 👇";
+        setTimeout(() => {
+          const igEl = document.getElementById("top23-ig");
+          if(igEl) igEl.focus();
+        }, 300);
+      } else {
+        toast("No se pudo guardar. Reintenta o prueba más tarde.","err");
+      }
     });
 }
 
@@ -5964,12 +6024,22 @@ function generarHistoriaGanador(){
     ctx.fillText("¡VENDIDO!", 0, 25);
     ctx.restore();
 
-    // Nombre del ganador
+    // Nombre del ganador (anónimo - solo iniciales)
     ctx.fillStyle = "#ececf5";
     ctx.font = "bold 48px Arial, sans-serif";
     ctx.textAlign = "center";
-    const nombre = S.lider.nombre || "Ganador";
-    ctx.fillText(nombre.length > 20 ? nombre.slice(0, 18) + "..." : nombre, 540, 580);
+    const nombreReal = S.lider.nombre || "Ganador";
+    // Crear nombre anónimo: "Di... An..." (primera letra de cada palabra + ...)
+    const palabras = nombreReal.trim().split(/\s+/).filter(p => p.length > 0);
+    let nombreAnonimo = "";
+    if(palabras.length >= 2){
+      nombreAnonimo = palabras.map(p => p.charAt(0).toUpperCase() + "...").join(" ");
+    } else if(palabras.length === 1){
+      nombreAnonimo = palabras[0].charAt(0).toUpperCase() + "...";
+    } else {
+      nombreAnonimo = "Ganador";
+    }
+    ctx.fillText(nombreAnonimo, 540, 580);
 
     // Monto
     ctx.fillStyle = "#f5c842";
@@ -6115,6 +6185,8 @@ window.generarHistoriaGanador = generarHistoriaGanador;
 window.copiarRegistroHistorial = copiarRegistroHistorial;
 window.copiarTodoHistorial = copiarTodoHistorial;
 window.borrarHistorial = borrarHistorial;
+window.checkModalTop23 = checkModalTop23;
+window.guardarGanadorEnHistorial = guardarGanadorEnHistorial;
 </script>
 </body>
 </html>
