@@ -3219,7 +3219,7 @@ function checkModalGanador(){
 }
 
 let canalTop23Elegido = "ig";
-let _setTop23Mostrado(false);
+let _top23Mostrado = false;
 function getTop23Mostrado(){ try{ return sessionStorage.getItem("paldea_top23_mostrado") === "1"; }catch(e){ return _top23Mostrado; } }
 function setTop23Mostrado(v){ _top23Mostrado = v; try{ sessionStorage.setItem("paldea_top23_mostrado", v ? "1" : "0"); }catch(e){} }
 
